@@ -23,6 +23,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --roster-bg:#eefaf2; --roster-line:#c3e8cf;
   --opt-bg:#fff8ea; --opt-line:#f1dcae;
   --hist-bg:#f6f1fe; --hist-line:#dccbf6;
+  --sh-bg:radial-gradient(circle at 50% 45%, rgba(255,255,255,.97) 0, rgba(234,241,255,.95) 45%, rgba(205,221,255,.95) 100%); --sh-ink:#1e293b; --sh-glow:rgba(99,132,255,.45); --sh-hub:#ffffff; --sh-hub-line:#334155;
   color-scheme:light;
 }
 /* 다크 팔레트: 시스템 설정이 다크이면서 사용자가 라이트를 고르지 않았거나, 사용자가 다크를 고른 경우 */
@@ -39,6 +40,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
     --roster-bg:#12241a; --roster-line:#25472f;
     --opt-bg:#262013; --opt-line:#4a3c1f;
     --hist-bg:#1e1830; --hist-line:#3c2f5e;
+    --sh-bg:radial-gradient(circle at 50% 45%, rgba(99,102,241,.95) 0, rgba(67,56,202,.94) 40%, rgba(30,27,94,.96) 100%); --sh-ink:#ffffff; --sh-glow:rgba(255,255,255,.4); --sh-hub:#ffffff; --sh-hub-line:#312e81;
     color-scheme:dark;
   }
 }
@@ -54,6 +56,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
     --roster-bg:#12241a; --roster-line:#25472f;
     --opt-bg:#262013; --opt-line:#4a3c1f;
     --hist-bg:#1e1830; --hist-line:#3c2f5e;
+    --sh-bg:radial-gradient(circle at 50% 45%, rgba(99,102,241,.95) 0, rgba(67,56,202,.94) 40%, rgba(30,27,94,.96) 100%); --sh-ink:#ffffff; --sh-glow:rgba(255,255,255,.4); --sh-hub:#ffffff; --sh-hub-line:#312e81;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -194,22 +197,23 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 .tool-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tool-btn [hidden]{display:none}
 /* 편성 연출 */
-.shuffle{position:fixed;inset:0;z-index:150;display:grid;place-items:center;background:rgba(15,17,21,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer}
+.shuffle{position:fixed;inset:0;z-index:150;display:grid;place-items:center;background:var(--sh-bg);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--sh-ink);cursor:pointer}
 .shuffle[hidden]{display:none}
 .shuffle-box{text-align:center;padding:16px}
-.shuffle-label{font-size:.95rem;letter-spacing:.3em;opacity:.7}
+.shuffle-label{font-size:1rem;font-weight:700;letter-spacing:.3em;opacity:.85}
 .shuffle-name{font-size:clamp(2rem,6vw,3.6rem);font-weight:800;letter-spacing:-.02em;margin:6px 0 0;min-height:1.3em}
 .shuffle-name.tick{animation:tick .09s ease-out}
 /* 룰렛 */
 .wheel-wrap{position:relative;width:min(60vh,86vw,520px);aspect-ratio:1;margin:14px auto 0}
-.wheel-wrap svg{display:block;width:100%;height:100%;overflow:visible}
+.wheel-wrap svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 28px var(--sh-glow)) drop-shadow(0 10px 24px rgba(0,0,0,.18))}
 .wheel-rot{will-change:transform}
-.wheel-slice{stroke:rgba(15,17,21,.55);stroke-width:.4;transition:opacity .25s}
-.wheel-label{fill:#fff;font-weight:700;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.25);stroke-width:.6}
-.wheel-wrap.won .wheel-slice:not(.win){opacity:.28}
-.wheel-pin{fill:#fff;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
-.wheel-hub{fill:#0f1115;stroke:#fff;stroke-width:1.6}
-.shuffle-skip{margin-top:14px;font-size:.8rem;opacity:.5}
+.wheel-slice{stroke:rgba(255,255,255,.85);stroke-width:.5;transition:opacity .25s}
+.wheel-label{fill:#fff;font-weight:800;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.32);stroke-width:.7}
+.wheel-rim{fill:none;stroke:#fff;stroke-width:3}
+.wheel-wrap.won .wheel-slice:not(.win){opacity:.35}
+.wheel-pin{fill:#ef4444;stroke:#fff;stroke-width:1.6;stroke-linejoin:round;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.wheel-hub{fill:var(--sh-hub);stroke:var(--sh-hub-line);stroke-width:1.6}
+.shuffle-skip{margin-top:14px;font-size:.85rem;opacity:.7}
 @keyframes tick{0%{transform:translateY(-14px) scale(.96);opacity:.4}100%{transform:none;opacity:1}}
 .done-banner{display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0 12px;padding:14px;border-radius:10px;background:var(--primary);color:var(--primary-ink);font-size:1.15rem;font-weight:800}
 .done-banner[hidden]{display:none}
@@ -1103,10 +1107,10 @@ function celebrate(present){
     const a0 = k*seg, a1 = a0 + seg, [x0,y0] = pt(a0,R), [x1,y1] = pt(a1,R), mid = a0 + seg/2;
     const d = n === 1 ? `M0 ${-R}A${R} ${R} 0 1 1 0 ${R}A${R} ${R} 0 1 1 0 ${-R}Z`
                       : `M0 0L${x0.toFixed(2)} ${y0.toFixed(2)}A${R} ${R} 0 ${seg > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z`;
-    svg += `<path class="wheel-slice" data-k="${k}" d="${d}" fill="hsl(${groupHue(k)} 62% 52%)"/>`
+    svg += `<path class="wheel-slice" data-k="${k}" d="${d}" fill="hsl(${groupHue(k)} 78% 56%)"/>`
          + `<text class="wheel-label" transform="rotate(${(mid-90).toFixed(2)}) translate(${R-6} 0)" text-anchor="end" font-size="${fs.toFixed(2)}">${esc(name)}</text>`;   // 중심→바깥 방향으로 읽힘
   });
-  svg += `</g><circle class="wheel-hub" r="13"/><path class="wheel-pin" d="M-7 -106L7 -106L0 -88Z"/></svg>`;
+  svg += `</g><circle class="wheel-rim" r="${R}"/><circle class="wheel-hub" r="13"/><path class="wheel-pin" d="M-7 -106L7 -106L0 -88Z"/></svg>`;
   wrap.innerHTML = svg; wrap.classList.remove('won');
   const rot = wrap.querySelector('.wheel-rot');
   // 회전: 16~18바퀴 + 임의 위치, ease-out cubic(빠르게 오래 돌다가 점점 느려짐)
