@@ -18,6 +18,9 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --sound:#0f766e; --sound-soft:#e3f5f1; --sound-line:#9fd9cc;
   --theme:#6d28d9; --theme-soft:#f1ebfd; --theme-line:#cdb8f5;
   --class-bg:#eef4ff; --class-line:#c9d9fb;
+  --roster-bg:#eefaf2; --roster-line:#c3e8cf;
+  --opt-bg:#fff8ea; --opt-line:#f1dcae;
+  --hist-bg:#f6f1fe; --hist-line:#dccbf6;
   color-scheme:light;
 }
 /* 다크 팔레트: 시스템 설정이 다크이면서 사용자가 라이트를 고르지 않았거나, 사용자가 다크를 고른 경우 */
@@ -30,6 +33,9 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
     --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
     --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
     --class-bg:#141c30; --class-line:#2a3a63;
+    --roster-bg:#12241a; --roster-line:#25472f;
+    --opt-bg:#262013; --opt-line:#4a3c1f;
+    --hist-bg:#1e1830; --hist-line:#3c2f5e;
     color-scheme:dark;
   }
 }
@@ -41,6 +47,9 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
   --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
     --class-bg:#141c30; --class-line:#2a3a63;
+    --roster-bg:#12241a; --roster-line:#25472f;
+    --opt-bg:#262013; --opt-line:#4a3c1f;
+    --hist-bg:#1e1830; --hist-line:#3c2f5e;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -52,8 +61,12 @@ header.app h1{margin:2px 0 0;font-size:1.9rem;font-weight:800;letter-spacing:-.0
 header.app p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-top:14px}
 /* 1. 반·과제 정보: 작업 기준 영역을 연한 파랑으로 구분 */
+/* 단계별 카드 배경: 1 파랑 · 2 초록 · 3 주황 · 이력 보라 (결과 카드는 조 색이 많아 흰 바탕 유지) */
 #classSec{background:var(--class-bg);border-color:var(--class-line)}
-#classSec .step,#classSec .badge{background:var(--surface)}
+#rosterSec{background:var(--roster-bg);border-color:var(--roster-line)}
+#optSec{background:var(--opt-bg);border-color:var(--opt-line)}
+#histSec{background:var(--hist-bg);border-color:var(--hist-line)}
+:is(#classSec,#rosterSec,#optSec,#histSec) :is(.step,.badge,.table-wrap,.preview){background:var(--surface)}
 .card h2{display:flex;gap:10px;align-items:center;font-size:1.05rem;font-weight:700;margin:0 0 16px}
 .step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:.8rem;font-weight:700;flex:none}
 .grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
@@ -336,7 +349,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
       <fieldset class="opt-block">
         <legend>균형 조건</legend>
         <label class="choice"><input type="checkbox" id="optGender" checked> 성별 균형 (남·여를 조마다 고르게)</label>
-        <label class="choice"><input type="checkbox" id="optTag"> 특성 분산 (편입·재수강 등 고르게)</label>
+        <label class="choice"><input type="checkbox" id="optTag" checked> 특성 분산 (편입·재수강 등 고르게)</label>
         <label class="choice"><input type="checkbox" id="optAvoid" checked> 이전 조원과 중복 피하기</label>
         <p class="help">조건이 많을수록 결과의 무작위성은 줄어듭니다. 필요한 조건만 켜세요.</p>
       </fieldset>
@@ -381,7 +394,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 
   <!-- 5. 이력 -->
   <section class="card" id="histSec">
-    <h2><span class="step">5</span>편성 이력 <span class="muted" style="font-weight:400;font-size:.9rem" id="histSummary"></span></h2>
+    <h2><span class="step" id="histStep">4</span>편성 이력 <span class="muted" style="font-weight:400;font-size:.9rem" id="histSummary"></span></h2>
     <ul class="hist" id="histList"></ul>
     <p class="help">저장된 이력은 ‘이전 조원과 중복 피하기’와 ‘조장 순환’에 사용됩니다.</p>
   </section>
@@ -680,6 +693,11 @@ function saveSettings(){
 }
 function loadSettings(){
   const s = db.settings || {};
+  // 균형 조건 기본값을 '모두 선택'으로 바꾼 뒤 기존 브라우저에도 한 번 적용
+  if (!(db.prefs && db.prefs.balanceDefaultsV2)){
+    s.optGender = s.optTag = s.optAvoid = true;
+    db.settings = s; db.prefs = Object.assign({}, db.prefs, {balanceDefaultsV2:true}); saveDB();
+  }
   for (const id of SETTING_IDS){ if (s[id] == null) continue; const el = $('#'+id); if (el.type === 'checkbox') el.checked = s[id]; else el.value = s[id]; }
   if (!$('#cls').value) $('#cls').value = 'A'; // 이전 버전의 자유 입력 값 대비
   if (s.mode) document.querySelector(`input[name=mode][value=${s.mode}]`).checked = true;
@@ -816,6 +834,7 @@ function orderedMembers(g){
 }
 function renderResult(){
   const sec = $('#resultSec');
+  $('#histStep').textContent = result ? '5' : '4';   // 결과 카드가 숨겨지면 이력이 4단계
   if (!result){ sec.hidden = true; return; }
   sec.hidden = false;
   const N = result.names, total = result.groups.reduce((t,g)=>t+g.members.length,0);
