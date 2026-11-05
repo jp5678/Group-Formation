@@ -100,6 +100,18 @@ header.app p{margin:6px 0 0;color:var(--muted);font-size:1.1rem;font-weight:500}
 input[type=text],input[type=number],select,textarea{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-width:0}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
 textarea{width:100%;resize:vertical}
+/* 교과목명·과제명 드롭다운(전체 목록 보기 가능) */
+.combo{position:relative;display:flex}
+.combo input{flex:1;padding-right:38px}
+.combo-btn{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:32px;height:30px;border:0;border-radius:6px;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.combo-btn:hover{background:var(--surface-2);color:var(--text)}
+.combo-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.combo.open .combo-btn svg{transform:rotate(180deg)}
+.combo-list{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:60;margin:0;padding:4px;list-style:none;max-height:260px;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 24px rgba(0,0,0,.14)}
+.combo-list li{padding:8px 10px;border-radius:6px;color:var(--text);font-size:.95rem;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.combo-list li.active,.combo-list li:hover{background:var(--primary-soft)}
+.combo-list li[aria-selected="true"]{font-weight:700;color:var(--primary)}
+.combo-list li.combo-empty{color:var(--muted);cursor:default;background:none}
 /* 명단 입력: 탭 간격을 넓혀 제목 줄·예시·붙여넣은 엑셀 데이터의 열을 맞춤 */
 #paste,#paste::placeholder{tab-size:6.5em;-moz-tab-size:6.5em}
 #paste{white-space:pre;overflow-x:auto}
@@ -309,14 +321,20 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
           <option value="D">D반</option><option value="E">E반</option><option value="F">F반</option>
         </select>
       </label>
-      <label class="field">교과목명
-        <input type="text" id="subject" maxlength="60" placeholder="예: AI융합 간호정보학" list="subjectList" autocomplete="off">
-        <datalist id="subjectList"></datalist>
-      </label>
-      <label class="field">과제명
-        <input type="text" id="task" maxlength="60" placeholder="예: 1차 팀 프로젝트" list="taskList" autocomplete="off">
-        <datalist id="taskList"></datalist>
-      </label>
+      <div class="field"><label for="subject">교과목명</label>
+        <div class="combo">
+          <input type="text" id="subject" maxlength="60" placeholder="예: AI융합 간호정보학" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="subjectList">
+          <button type="button" class="combo-btn" tabindex="-1" aria-label="교과목명 목록 열기" title="목록 보기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <ul class="combo-list" id="subjectList" role="listbox" aria-label="교과목명 추천" hidden></ul>
+        </div>
+      </div>
+      <div class="field"><label for="task">과제명</label>
+        <div class="combo">
+          <input type="text" id="task" maxlength="60" placeholder="예: 1차 팀 프로젝트" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="taskList">
+          <button type="button" class="combo-btn" tabindex="-1" aria-label="과제명 목록 열기" title="목록 보기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+          <ul class="combo-list" id="taskList" role="listbox" aria-label="과제명 추천" hidden></ul>
+        </div>
+      </div>
     </div>
     <p class="help">현재 반: <span class="badge" id="classBadge"></span> <span id="classInfo"></span></p>
   </section>
@@ -1417,10 +1435,48 @@ function suggestValues(field){
   SUGGEST[field].forEach(add);   // 기본 예시
   return out.slice(0, 20);
 }
-function renderSuggest(){
-  for (const f of ['subject','task'])
-    $(`#${f}List`).innerHTML = suggestValues(f).map(v => `<option value="${esc(v)}"></option>`).join('');
+// 직접 만든 드롭다운: ▼ 버튼은 입력값과 관계없이 전체 목록, 글자 입력 시에는 포함 검색
+const combos = {};
+function setupCombo(id){
+  const inp = $('#'+id), wrap = inp.closest('.combo'), list = wrap.querySelector('.combo-list'), btn = wrap.querySelector('.combo-btn');
+  let items = [], active = -1, filter = '';
+  const isOpen = () => !list.hidden;
+  const draw = () => {
+    const q = filter.trim().toLowerCase();
+    items = suggestValues(id).filter(v => !q || v.toLowerCase().includes(q));
+    list.innerHTML = items.length
+      ? items.map((v,i) => `<li role="option" id="${id}-opt-${i}" data-i="${i}" class="${i===active?'active':''}" aria-selected="${v===inp.value.trim()}">${esc(v)}</li>`).join('')
+      : '<li class="combo-empty" aria-disabled="true">일치하는 추천 항목이 없습니다</li>';
+    if (active >= 0 && items[active]){ inp.setAttribute('aria-activedescendant', `${id}-opt-${active}`); list.children[active].scrollIntoView({block:'nearest'}); }
+    else inp.removeAttribute('aria-activedescendant');
+  };
+  const open = q => { filter = q; active = -1; draw(); list.hidden = false; wrap.classList.add('open'); inp.setAttribute('aria-expanded','true'); };
+  const close = () => { list.hidden = true; wrap.classList.remove('open'); inp.setAttribute('aria-expanded','false'); inp.removeAttribute('aria-activedescendant'); active = -1; };
+  const choose = v => {
+    inp.value = v; close();
+    inp.dispatchEvent(new Event('input', {bubbles:true})); inp.dispatchEvent(new Event('change', {bubbles:true}));
+  };
+  btn.addEventListener('mousedown', e => e.preventDefault());   // 입력칸 포커스 유지
+  // 닫혀 있거나 검색으로 걸러진 상태면 전체 목록을 열고, 이미 전체 목록이면 닫음
+  btn.addEventListener('click', () => { if (isOpen() && !filter.trim()) close(); else { open(''); inp.focus(); } });
+  inp.addEventListener('input', e => { if (e.isTrusted) open(inp.value); });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+      e.preventDefault();
+      if (!isOpen()){ open(''); }
+      if (!items.length) return;
+      active = e.key === 'ArrowDown' ? (active + 1) % items.length : (active <= 0 ? items.length - 1 : active - 1);
+      draw();
+    } else if (e.key === 'Enter' && isOpen() && active >= 0){ e.preventDefault(); choose(items[active]); }
+    else if (e.key === 'Escape' && isOpen()){ e.preventDefault(); e.stopPropagation(); close(); }
+  });
+  inp.addEventListener('blur', () => setTimeout(close, 120));
+  list.addEventListener('mousedown', e => e.preventDefault());
+  list.addEventListener('click', e => { const li = e.target.closest('li[data-i]'); if (li) choose(items[+li.dataset.i]); });
+  combos[id] = {refresh: () => { if (isOpen()) draw(); }, close};
 }
+setupCombo('subject'); setupCombo('task');
+function renderSuggest(){ Object.values(combos).forEach(c => c.refresh()); }
 ['subject','task'].forEach(f => $('#'+f).addEventListener('change', e => {
   const v = e.target.value.trim(); if (!v) return;
   const recent = Object.assign({subject:[], task:[]}, db.prefs && db.prefs.recent);
