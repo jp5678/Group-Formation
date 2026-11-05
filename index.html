@@ -81,7 +81,9 @@ header.app p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
 .class-bar-in{pointer-events:auto;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);margin-top:8px;padding:6px 8px 6px 12px;border-radius:99px;background:var(--class-bg);border:1px solid var(--class-line);box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:.9rem}
 .class-bar-in b{color:var(--class-ink);white-space:nowrap}
 .class-bar-in span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.class-bar-in .btn{padding:2px 10px;font-size:.8rem;border-radius:99px}
+.class-bar-in .btn{padding:2px 10px;font-size:.8rem;border-radius:99px;flex:none}
+.class-bar-in .btn.primary{padding:3px 12px}
+.sec-ico{width:20px;height:20px;flex:none;margin-right:-4px;fill:none;stroke:var(--bar,var(--muted));stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .card h2{display:flex;gap:10px;align-items:center;font-size:1.05rem;font-weight:700;margin:0 0 16px}
 .step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:.8rem;font-weight:700;flex:none}
 .grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
@@ -269,12 +271,12 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
   </header>
 
   <div class="class-bar" id="classBar" aria-hidden="true">
-    <div class="class-bar-in"><b id="classBarKey"></b><span id="classBarTask"></span><button class="btn" id="classBarBtn" tabindex="-1">변경</button></div>
+    <div class="class-bar-in"><b id="classBarKey"></b><span id="classBarTask"></span><button class="btn" id="classBarBtn" tabindex="-1">변경</button><button class="btn primary" id="classBarRun" tabindex="-1">조 편성하기</button></div>
   </div>
 
   <!-- 1. 학급·과제 정보 -->
   <section class="card" id="classSec">
-    <h2><span class="step">1</span>반·과제 정보</h2>
+    <h2><span class="step">1</span><svg class="sec-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 9.5 12 4.5 2 9.5l10 5 10-5z"/><path d="M6 11.5v5c3.3 2.2 8.7 2.2 12 0v-5"/><path d="M22 9.5v5"/></svg>반·과제 정보</h2>
     <div class="grid-form">
       <label class="field">학년
         <select id="grade">
@@ -302,7 +304,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 
   <!-- 2. 학생 명단 -->
   <section class="card" id="rosterSec">
-    <h2><span class="step">2</span>학생 명단</h2>
+    <h2><span class="step">2</span><svg class="sec-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M21.5 20a6.5 6.5 0 0 0-3.8-5.9"/></svg>학생 명단</h2>
     <label class="paste-label" for="paste">엑셀·구글 시트에서 복사해 붙여넣거나 직접 입력하세요. (한 줄에 한 명)</label>
     <textarea id="paste" rows="5" wrap="off" placeholder="학번	이름	성별	특성	조장희망
 20260101	김민지	여	편입	O
@@ -344,7 +346,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 
   <!-- 3. 편성 옵션 -->
   <section class="card" id="optSec">
-    <h2><span class="step">3</span>편성 옵션</h2>
+    <h2><span class="step">3</span><svg class="sec-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>편성 옵션</h2>
     <div class="opt-grid">
       <fieldset class="opt-block">
         <legend>조 구성 방식</legend>
@@ -397,7 +399,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 
   <!-- 4. 결과 -->
   <section class="card" id="resultSec" hidden>
-    <h2><span class="step">4</span>편성 결과</h2>
+    <h2><span class="step">4</span><svg class="sec-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>편성 결과</h2>
     <div class="done-banner" id="doneBanner" hidden></div>
     <div class="meta" id="resultMeta"></div>
     <div class="evals" id="resultEvals"></div>
@@ -415,7 +417,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 
   <!-- 5. 이력 -->
   <section class="card" id="histSec">
-    <h2><span class="step" id="histStep">4</span>편성 이력 <span class="muted" style="font-weight:400;font-size:.9rem" id="histSummary"></span></h2>
+    <h2><span class="step" id="histStep">4</span><svg class="sec-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5"/><path d="M3.5 3.5v5h5"/><path d="M12 7.5V12l3 2"/></svg>편성 이력 <span class="muted" style="font-weight:400;font-size:.9rem" id="histSummary"></span></h2>
     <ul class="hist" id="histList"></ul>
     <p class="help">저장된 이력은 ‘이전 조원과 중복 피하기’와 ‘조장 순환’에 사용됩니다.</p>
   </section>
@@ -1237,6 +1239,7 @@ $('#btnAddOne').addEventListener('click', () => {
 $('#newName').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnAddOne').click(); });
 
 $('#btnRun').addEventListener('click', () => runFormation(false));
+$('#classBarRun').addEventListener('click', () => runFormation(false));   // 상단 표시줄에서 바로 편성
 $('#btnReshuffle').addEventListener('click', () => { $('#seedInput').value = ''; runFormation(true); });
 $('#btnPresent').addEventListener('click', openPresent);
 $('#btnCopy').addEventListener('click', async () => toast(await copyText(resultText()) ? '결과를 복사했습니다. 공지에 붙여넣으세요.' : '복사에 실패했습니다.'));
@@ -1355,7 +1358,7 @@ if ('IntersectionObserver' in window){
     const show = !e.isIntersecting && e.boundingClientRect.top < 0;   // 카드가 위로 사라졌을 때만
     $('#classBar').classList.toggle('show', show);
     $('#classBar').setAttribute('aria-hidden', String(!show));
-    $('#classBarBtn').tabIndex = show ? 0 : -1;
+    $('#classBarBtn').tabIndex = $('#classBarRun').tabIndex = show ? 0 : -1;
   }, {threshold:0}).observe($('#classSec'));
 }
 
