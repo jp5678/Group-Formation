@@ -17,6 +17,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --male:#2563eb; --male-soft:#eef3fe; --female:#db2777; --female-soft:#fdf0f6;
   --sound:#0f766e; --sound-soft:#e3f5f1; --sound-line:#9fd9cc;
   --theme:#6d28d9; --theme-soft:#f1ebfd; --theme-line:#cdb8f5;
+  --title:#1d4ed8; /* 앱 제목 색 */
   --gh:210; /* 학년별 색상각(JS가 설정) */
   --class-bg:hsl(var(--gh) 90% 96%); --class-line:hsl(var(--gh) 60% 84%); --class-ink:hsl(var(--gh) 65% 36%); --class-bar:hsl(var(--gh) 65% 52%);
   --roster-bar:#22a05a; --opt-bar:#e09a1a; --result-bar:#2563eb; --hist-bar:#8b5cf6;
@@ -35,6 +36,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
     --male:#8fb2ff; --male-soft:#1a2440; --female:#f49ac1; --female-soft:#3a1a2a;
     --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
     --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
+  --title:#8ab4ff;
     --class-bg:hsl(var(--gh) 40% 13%); --class-line:hsl(var(--gh) 35% 27%); --class-ink:hsl(var(--gh) 75% 76%); --class-bar:hsl(var(--gh) 60% 58%);
     --roster-bar:#3fbf73; --opt-bar:#f0b14a; --result-bar:#6b9bff; --hist-bar:#a78bfa;
     --roster-bg:#12241a; --roster-line:#25472f;
@@ -51,6 +53,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --male:#8fb2ff; --male-soft:#1a2440; --female:#f49ac1; --female-soft:#3a1a2a;
   --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
   --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
+  --title:#8ab4ff;
     --class-bg:hsl(var(--gh) 40% 13%); --class-line:hsl(var(--gh) 35% 27%); --class-ink:hsl(var(--gh) 75% 76%); --class-bar:hsl(var(--gh) 60% 58%);
     --roster-bar:#3fbf73; --opt-bar:#f0b14a; --result-bar:#6b9bff; --hist-bar:#a78bfa;
     --roster-bg:#12241a; --roster-line:#25472f;
@@ -63,9 +66,9 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
 .wrap{max-width:1120px;margin:0 auto;padding:0 16px 56px}
 header.app{padding:32px 0 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-header.app .eyebrow{font-size:.82rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
-header.app h1{margin:2px 0 0;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;line-height:1.2}
-header.app p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
+header.app .eyebrow{font-size:1rem;font-weight:700;color:var(--muted);letter-spacing:.02em}
+header.app h1{margin:4px 0 0;font-size:2.6rem;font-weight:800;letter-spacing:-.03em;line-height:1.15;color:var(--title)}
+header.app p{margin:6px 0 0;color:var(--muted);font-size:1.1rem;font-weight:500}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-top:14px}
 /* 1. 반·과제 정보: 작업 기준 영역을 연한 파랑으로 구분 */
 /* 단계별 카드 배경: 1 파랑 · 2 초록 · 3 주황 · 이력 보라 (결과 카드는 조 색이 많아 흰 바탕 유지) */
@@ -81,6 +84,7 @@ header.app p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
 /* 현재 반 고정 표시줄 */
 .class-bar{position:fixed;top:0;left:0;right:0;z-index:90;display:flex;justify-content:center;pointer-events:none;transform:translateY(-110%);transition:transform .2s}
 .class-bar.show{transform:none}
+.class-bar:not(.show){visibility:hidden;transition:transform .2s,visibility 0s .2s}   /* 숨김 상태의 그림자가 화면 위로 비치지 않게 */
 .class-bar-in{pointer-events:auto;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);margin-top:8px;padding:6px 8px 6px 12px;border-radius:99px;background:var(--class-bg);border:1px solid var(--class-line);box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:.9rem}
 .class-bar-in b{color:var(--class-ink);white-space:nowrap}
 .class-bar-in span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -240,7 +244,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 .pcard .ld{color:var(--accent);font-weight:700}
 @keyframes pop{0%{transform:scale(.7) rotateY(80deg);opacity:0}100%{transform:none;opacity:1}}
 @media (prefers-reduced-motion: reduce){.present-grid .pcard.revealed,.groups.celebrate .group,.groups.celebrate .chip,.done-banner.show,.shuffle-name.tick{animation:none}.toast{transition:none}}
-@media (max-width:560px){.card{padding:16px}header.app h1{font-size:1.6rem}.btn.big{width:100%}}
+@media (max-width:560px){.card{padding:16px}header.app h1{font-size:2.1rem}header.app .eyebrow{font-size:.92rem}header.app p{font-size:1rem}.btn.big{width:100%}}
 @media print{
   body{background:#fff;color:#000}
   header.app,footer.app,.card:not(#resultSec),.class-bar,.no-print,.toast,.present,.shuffle,.done-banner,#confetti{display:none!important}
