@@ -55,6 +55,11 @@ header.app p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
 input[type=text],input[type=number],select,textarea{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-width:0}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
 textarea{width:100%;resize:vertical}
+/* 명단 입력: 탭 간격을 넓혀 제목 줄·예시·붙여넣은 엑셀 데이터의 열을 맞춤 */
+#paste,#paste::placeholder{tab-size:6.5em;-moz-tab-size:6.5em}
+#paste{white-space:pre;overflow-x:auto}
+.paste-label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
+@media (max-width:520px){#paste,#paste::placeholder{tab-size:5.6em;-moz-tab-size:5.6em}}
 input[type=number]{width:84px}
 .btn{font:inherit;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
 .btn:hover{background:var(--surface-2)}
@@ -258,8 +263,8 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
   <!-- 2. 학생 명단 -->
   <section class="card" id="rosterSec">
     <h2><span class="step">2</span>학생 명단</h2>
-    <textarea id="paste" rows="5" placeholder="엑셀·구글 시트에서 복사해 붙여넣거나 직접 입력하세요. (한 줄에 한 명)
-학번	이름	성별	특성	조장희망
+    <label class="paste-label" for="paste">엑셀·구글 시트에서 복사해 붙여넣거나 직접 입력하세요. (한 줄에 한 명)</label>
+    <textarea id="paste" rows="5" wrap="off" placeholder="학번	이름	성별	특성	조장희망
 20260101	김민지	여	편입	O
 20260102	이현우	남"></textarea>
     <p class="help">열 순서: <b>학번, 이름, 성별, 특성(선택), 조장희망(선택: O/예)</b>. 첫 줄에 제목 행이 있으면 열 이름으로 자동 인식합니다. 이름만 한 줄씩 넣어도 됩니다.</p>
