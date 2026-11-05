@@ -85,16 +85,30 @@ details.adv summary{cursor:pointer;font-weight:600;color:var(--muted)}
 .leader-line{font-size:.85rem;color:var(--muted);margin-top:2px}
 .leader-line em{font-style:normal}
 .group ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
-.chip{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;background:var(--surface-2);cursor:pointer;user-select:none;border:2px solid transparent}
+.chip{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;background:var(--surface-2);cursor:pointer;user-select:none;border:2px solid transparent}
 .chip.is-leader{background:var(--accent-soft)}
 .chip.selected{border-color:var(--primary)}
-.chip .nm{font-weight:600}
+.chip .nm{font-weight:600;white-space:nowrap}
 .chip .sid{font-size:.72rem;color:var(--muted)}
 .star{border:0;background:none;color:var(--accent);font-size:1.05rem;cursor:pointer;padding:0 2px;line-height:1}
 .g{font-size:.72rem;padding:1px 6px;border-radius:99px;font-weight:600}
 .g-m{background:var(--male-soft);color:var(--male)}
 .g-f{background:var(--female-soft);color:var(--female)}
+.g,.tag{white-space:nowrap}
 .tag{font-size:.72rem;padding:1px 6px;border-radius:99px;border:1px solid var(--border);color:var(--muted)}
+/* 조 카드 색조: --h(색상각)만 바꿔 연한 배경·테두리·제목색을 만든다 */
+.group{--h:215;background:hsl(var(--h) 80% 96.5%);border-color:hsl(var(--h) 50% 86%)}
+.group h3{color:hsl(var(--h) 50% 36%)}
+.group .chip{background:rgba(255,255,255,.78)}
+.group .chip.is-leader{background:var(--accent-soft)}
+.present-grid .pcard{--h:215;background:hsl(var(--h) 80% 96.5%);border-color:hsl(var(--h) 50% 86%)}
+.pcard h3{color:hsl(var(--h) 50% 36%)}
+@media (prefers-color-scheme: dark){
+  .group,.present-grid .pcard{background:hsl(var(--h) 22% 14%);border-color:hsl(var(--h) 22% 25%)}
+  .group h3,.pcard h3{color:hsl(var(--h) 70% 76%)}
+  .group .chip{background:rgba(255,255,255,.05)}
+  .group .chip.is-leader{background:var(--accent-soft)}
+}
 .selecting .group{outline:2px dashed transparent;outline-offset:2px}
 .selecting .group:hover,.group.drop-target{outline:2px dashed var(--primary)}
 .empty-group{color:var(--muted);font-size:.85rem;padding:6px}
@@ -136,12 +150,12 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 .pcard h3{margin:0 0 8px;font-size:clamp(1.3rem,2.2vw,2rem)}
 .pcard .q{flex:1;display:grid;place-items:center;font-size:3.5rem;color:var(--border);font-weight:800}
 .pcard .names{display:none;list-style:none;margin:0;padding:0;font-size:clamp(1.1rem,1.7vw,1.5rem);line-height:1.6}
-.pcard.revealed{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary);animation:pop .55s cubic-bezier(.2,1.3,.4,1)}
+.present-grid .pcard.revealed{border-color:hsl(var(--h) 55% 58%);box-shadow:0 0 0 1px hsl(var(--h) 55% 58%);animation:pop .55s cubic-bezier(.2,1.3,.4,1)}
 .pcard.revealed .q{display:none}
 .pcard.revealed .names{display:block}
 .pcard .ld{color:var(--accent);font-weight:700}
 @keyframes pop{0%{transform:scale(.7) rotateY(80deg);opacity:0}100%{transform:none;opacity:1}}
-@media (prefers-reduced-motion: reduce){.pcard.revealed,.groups.celebrate .group,.groups.celebrate .chip,.done-banner.show,.shuffle-name.tick{animation:none}.toast{transition:none}}
+@media (prefers-reduced-motion: reduce){.present-grid .pcard.revealed,.groups.celebrate .group,.groups.celebrate .chip,.done-banner.show,.shuffle-name.tick{animation:none}.toast{transition:none}}
 @media (max-width:560px){.card{padding:16px}header.app h1{font-size:1.6rem}.btn.big{width:100%}}
 @media print{
   body{background:#fff;color:#000}
@@ -169,7 +183,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 
   <!-- 1. 학급·과제 정보 -->
   <section class="card" id="classSec">
-    <h2><span class="step">1</span>학급·과제 정보</h2>
+    <h2><span class="step">1</span>반·과제 정보</h2>
     <div class="grid-form">
       <label class="field">학년
         <select id="grade">
@@ -190,7 +204,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
         <input type="text" id="task" maxlength="60" placeholder="예: 1차 팀 프로젝트">
       </label>
     </div>
-    <p class="help">현재 학급: <span class="badge" id="classBadge"></span> <span id="classInfo"></span></p>
+    <p class="help">현재 반: <span class="badge" id="classBadge"></span> <span id="classInfo"></span></p>
   </section>
 
   <!-- 2. 학생 명단 -->
@@ -735,6 +749,8 @@ function runFormation(forceNewSeed){
 }
 
 /* ===================== 렌더: 결과 ===================== */
+const GROUP_HUES = [215, 160, 35, 275, 345, 190, 95, 15, 245, 55, 310, 130];
+const groupHue = i => GROUP_HUES[i % GROUP_HUES.length];
 function orderedMembers(g){
   const N = result.names;
   return [...g.members].sort((a,b) => (b===g.leader) - (a===g.leader) || String(N[a]?.name).localeCompare(String(N[b]?.name), 'ko'));
@@ -761,7 +777,7 @@ function renderResult(){
   $('#resultEvals').innerHTML = ev.join('');
   const nameCount = new Map(); Object.values(N).forEach(s => nameCount.set(s.name, (nameCount.get(s.name)||0)+1));
   $('#groups').classList.toggle('selecting', !!sel);
-  $('#groups').innerHTML = result.groups.map((g,gi) => `<article class="group" data-g="${gi}" style="--i:${gi}">
+  $('#groups').innerHTML = result.groups.map((g,gi) => `<article class="group" data-g="${gi}" style="--i:${gi};--h:${groupHue(gi)}">
       <header><h3>${gi+1}조</h3><span class="cnt">${g.members.length}명</span></header>
       <div class="leader-line">${g.leader ? '조장 ' + esc(N[g.leader]?.name) : '<em>조장 미지정</em>'}</div>
       <ul>${g.members.length ? orderedMembers(g).map((id,j) => {
@@ -990,7 +1006,7 @@ function openPresent(){
   if (!result) return;
   const N = result.names;
   $('#pTitle').textContent = resultTitle();
-  $('#pGrid').innerHTML = result.groups.map((g,i) => `<div class="pcard" data-i="${i}"><h3>${i+1}조</h3><div class="q">?</div>
+  $('#pGrid').innerHTML = result.groups.map((g,i) => `<div class="pcard" data-i="${i}" style="--h:${groupHue(i)}"><h3>${i+1}조</h3><div class="q">?</div>
     <ul class="names">${orderedMembers(g).map(id => id===g.leader ? `<li class="ld">★ ${esc(N[id].name)} (조장)</li>` : `<li>${esc(N[id].name)}</li>`).join('')}</ul></div>`).join('');
   revealed = 0; $('#present').hidden = false; document.body.style.overflow = 'hidden'; $('#pNext').focus(); updatePresentBtn();
 }
