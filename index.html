@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>청암대학교 간호학과 조(팀) 자동 편성기</title>
-<meta name="description" content="학년·반별 명단으로 조(팀)를 무작위 편성하고 조장을 선정하는 웹앱. 성별 균형, 이전 조원 중복 회피, 조장 순환, 편성 이력 관리 지원.">
+<title>팀 스테이션 · 청암대학교 간호학과</title>
+<meta name="description" content="팀 스테이션 — 학년·반별 명단으로 조(팀)를 무작위 편성하고 조장을 선정하는 웹앱. 성별 균형, 이전 조원 중복 회피, 조장 순환, 편성 이력 관리 지원.">
 <style>
 :root{
   --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f2f4f7; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
@@ -26,8 +26,8 @@
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
 .wrap{max-width:1120px;margin:0 auto;padding:0 16px 56px}
 header.app{padding:32px 0 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-header.app h1{margin:0;font-size:1.5rem;font-weight:700;letter-spacing:-.02em}
-header.app h1 span{color:var(--muted);font-weight:500}
+header.app .eyebrow{font-size:.82rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
+header.app h1{margin:2px 0 0;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;line-height:1.2}
 header.app p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-top:14px}
 .card h2{display:flex;gap:10px;align-items:center;font-size:1.05rem;font-weight:700;margin:0 0 16px}
@@ -142,7 +142,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 .pcard .ld{color:var(--accent);font-weight:700}
 @keyframes pop{0%{transform:scale(.7) rotateY(80deg);opacity:0}100%{transform:none;opacity:1}}
 @media (prefers-reduced-motion: reduce){.pcard.revealed,.groups.celebrate .group,.groups.celebrate .chip,.done-banner.show,.shuffle-name.tick{animation:none}.toast{transition:none}}
-@media (max-width:560px){.card{padding:16px}header.app h1{font-size:1.3rem}.btn.big{width:100%}}
+@media (max-width:560px){.card{padding:16px}header.app h1{font-size:1.6rem}.btn.big{width:100%}}
 @media print{
   body{background:#fff;color:#000}
   header.app,footer.app,.card:not(#resultSec),.no-print,.toast,.present,.shuffle,.done-banner,#confetti{display:none!important}
@@ -160,8 +160,9 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 <div class="wrap">
   <header class="app">
     <div>
-      <h1>청암대학교 간호학과 <span>조(팀) 자동 편성기</span></h1>
-      <p>학년·반을 고르고 명단을 넣으면 공정한 무작위 방식으로 조(팀)를 편성하고 조장을 정합니다.</p>
+      <div class="eyebrow">청암대학교 간호학과</div>
+      <h1>팀 스테이션</h1>
+      <p>함께 일할 동료를 만나는 곳</p>
     </div>
     <button class="btn small sound-btn" id="btnSound" aria-pressed="true">소리 켜짐</button>
   </header>
@@ -957,7 +958,7 @@ function celebrate(present){
     renderResult();
     const grid = $('#groups'), total = result.groups.reduce((t,g)=>t+g.members.length,0);
     const banner = $('#doneBanner');
-    banner.textContent = `편성 완료! ${result.groups.length}개 조 · ${total}명`;
+    banner.textContent = `오늘의 팀이 모였습니다! ${result.groups.length}개 조 · ${total}명`;
     banner.hidden = false; banner.classList.remove('show'); void banner.offsetWidth; banner.classList.add('show');
     grid.classList.remove('celebrate'); void grid.offsetWidth; grid.classList.add('celebrate');
     const maxMembers = Math.max(...result.groups.map(g => g.members.length));
