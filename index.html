@@ -244,9 +244,10 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 @media print{
   body{background:#fff;color:#000}
   header.app,footer.app,.card:not(#resultSec),.class-bar,.no-print,.toast,.present,.shuffle,.done-banner,#confetti{display:none!important}
-  #resultSec{border:0;box-shadow:none;padding:0;margin:0;background:#fff}
+  #resultSec{border:0;box-shadow:none!important;padding:0;margin:0;background:#fff!important}
+  #resultSec,#resultSec *{color:#000!important}   /* 다크 모드에서 인쇄해도 검은 글자 */
   .groups{grid-template-columns:repeat(3,1fr)}
-  .group{break-inside:avoid;background:#fff;border-color:#999}
+  .group{break-inside:avoid;background:#fff!important;border-color:#999!important}
   .chip{background:#fff!important;border:0;padding:2px 0}
   .star{display:none}
   .chip.is-leader .nm::before{content:"★ "}
@@ -317,7 +318,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
     <div class="row" style="margin-top:10px">
       <button class="btn primary" id="btnAdd">명단에 추가</button>
       <button class="btn" id="btnReplace">명단 바꾸기</button>
-      <label class="btn" for="csvFile">CSV 파일 불러오기</label>
+      <label class="btn" for="csvFile" tabindex="0" role="button">CSV 파일 불러오기</label>
       <input type="file" id="csvFile" accept=".csv,.tsv,.txt,text/csv" hidden>
       <button class="btn" id="btnSample">예시 명단 넣기</button>
     </div>
@@ -429,7 +430,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
   <footer class="app">
     <div class="row" style="margin-bottom:8px">
       <button class="btn small" id="btnBackup">전체 데이터 백업 (JSON)</button>
-      <label class="btn small" for="restoreFile">백업 복원</label>
+      <label class="btn small" for="restoreFile" tabindex="0" role="button">백업 복원</label>
       <input type="file" id="restoreFile" accept=".json,application/json" hidden>
       <button class="btn small danger" id="btnDeleteClass">이 반 데이터 삭제</button>
     </div>
@@ -730,8 +731,10 @@ function loadSettings(){
   }
   for (const id of SETTING_IDS){ if (s[id] == null) continue; const el = $('#'+id); if (el.type === 'checkbox') el.checked = s[id]; else el.value = s[id]; }
   if (!$('#cls').value) $('#cls').value = 'A'; // 이전 버전의 자유 입력 값 대비
-  if (s.mode) document.querySelector(`input[name=mode][value=${s.mode}]`).checked = true;
-  if (s.rem) document.querySelector(`input[name=rem][value=${s.rem}]`).checked = true;
+  const radio = (n, v) => document.querySelector(`input[name=${n}][value="${CSS.escape(String(v))}"]`);
+  if (s.mode && radio('mode', s.mode)) radio('mode', s.mode).checked = true;
+  if (s.rem && radio('rem', s.rem)) radio('rem', s.rem).checked = true;
+  if (!$('#leader').value) $('#leader').value = 'random';
 }
 
 /* ===================== 편성 알고리즘 ===================== */
@@ -931,7 +934,7 @@ function resultText(){
   return lines.join('\n');
 }
 function resultCSV(){
-  const N = result.names, q = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  const N = result.names, q = v => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g,'""')}"`; };
   const rows = [['조','역할','학번','이름','성별','특성']];
   result.groups.forEach((g,i) => orderedMembers(g).forEach(id => rows.push([`${i+1}조`, id===g.leader?'조장':'조원', id, N[id].name, N[id].gender, N[id].tag])));
   return '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n');
@@ -1082,8 +1085,9 @@ function celebrate(present){
   Sound.unlock();
   const finish = () => {
     shuffleDone = null; clearTimeout(shuffleTimer); cancelAnimationFrame(shuffleTimer);
-    $('#shuffle').hidden = true;
+    $('#shuffle').hidden = true; setBackdropInert(false);
     renderResult();
+    if (!result) return;
     const grid = $('#groups'), total = result.groups.reduce((t,g)=>t+g.members.length,0);
     const banner = $('#doneBanner');
     banner.textContent = `오늘의 팀이 모였습니다! ${result.groups.length}개 조 · ${total}명`;
@@ -1118,7 +1122,7 @@ function celebrate(present){
   const end = 360*(16 + Math.floor(Math.random()*3)) + (360 - (target*seg + seg*(.2 + Math.random()*.6)));
   const DUR = 6000, t0 = performance.now();
   let last = -1, lastSound = 0;
-  ov.hidden = false; shuffleDone = finish; nm.textContent = '';
+  ov.hidden = false; shuffleDone = finish; nm.textContent = ''; setBackdropInert(true);
   (function frame(now){
     if (shuffleDone !== finish) return;
     const p = Math.min(1, (now - t0) / DUR), ang = end * (1 - Math.pow(1 - p, 3));
@@ -1136,6 +1140,8 @@ function celebrate(present){
   })(t0);
 }
 function skipShuffle(){ if (shuffleDone) shuffleDone(); }
+// 룰렛·발표 모드가 떠 있는 동안 뒤쪽 화면(학년 변경 등)을 키보드로도 조작하지 못하게 막음
+function setBackdropInert(on){ $('.wrap').inert = on; $('.wrap').setAttribute('aria-hidden', String(on)); }
 function hideBanner(){ $('#doneBanner').hidden = true; }
 
 /* ===================== 발표 모드 ===================== */
@@ -1146,7 +1152,7 @@ function openPresent(){
   $('#pTitle').textContent = resultTitle();
   $('#pGrid').innerHTML = result.groups.map((g,i) => `<div class="pcard" data-i="${i}" style="--h:${groupHue(i)}"><h3>${i+1}조</h3><div class="q">?</div>
     <ul class="names">${orderedMembers(g).map(id => id===g.leader ? `<li class="ld">★ ${esc(N[id].name)} (조장)</li>` : `<li>${esc(N[id].name)}</li>`).join('')}</ul></div>`).join('');
-  revealed = 0; $('#present').hidden = false; document.body.style.overflow = 'hidden'; $('#pNext').focus(); updatePresentBtn();
+  revealed = 0; $('#present').hidden = false; document.body.style.overflow = 'hidden'; setBackdropInert(true); $('#pNext').focus(); updatePresentBtn();
 }
 function revealNext(){
   const cards = document.querySelectorAll('#pGrid .pcard');
@@ -1161,7 +1167,7 @@ function revealAll(){
   document.querySelectorAll('#pGrid .pcard').forEach(c => c.classList.add('revealed')); revealed = result.groups.length; updatePresentBtn();
 }
 function updatePresentBtn(){ $('#pNext').disabled = revealed >= result.groups.length; }
-function closePresent(){ $('#present').hidden = true; document.body.style.overflow = ''; }
+function closePresent(){ $('#present').hidden = true; document.body.style.overflow = ''; setBackdropInert(false); $('#btnPresent').focus(); }
 
 /* ===================== 예시 명단 ===================== */
 function sampleStudents(n = 43){
@@ -1214,6 +1220,9 @@ $('#btnSample').addEventListener('click', () => {
   if (roster().students.length && !confirm('현재 명단을 예시 명단(43명, 가상 인물)으로 바꿀까요?')) return;
   addStudents(sampleStudents(), true); toast('예시 명단 43명을 넣었습니다. (가상 인물)');
 });
+document.querySelectorAll('label[role=button][for]').forEach(l => l.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); document.getElementById(l.htmlFor).click(); }
+}));
 $('#btnAllPresent').addEventListener('click', () => { roster().students.forEach(s => s.present = true); saveDB(); renderRoster(); });
 $('#btnClearRoster').addEventListener('click', () => {
   if (!roster().students.length && !result) return;
@@ -1348,7 +1357,8 @@ $('#restoreFile').addEventListener('change', async e => {
     if (!d || typeof d.rosters !== 'object') throw new Error();
     if (!confirm('현재 브라우저의 모든 조 편성 데이터를 백업 파일 내용으로 바꿀까요?')) return;
     db = Object.assign({rosters:{}, history:{}, settings:{}}, d); saveDB();
-    loadSettings(); onClassChange(); toast('백업을 복원했습니다.');
+    loadSettings(); onClassChange(); applyTheme(); Sound.set(!(db.prefs && db.prefs.sound === false)); updateSoundBtn(); renderSuggest();
+    toast('백업을 복원했습니다.');
   }catch(_){ toast('올바른 백업 파일이 아닙니다.'); }
 });
 $('#btnDeleteClass').addEventListener('click', () => {
