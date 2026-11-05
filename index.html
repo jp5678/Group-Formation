@@ -17,7 +17,9 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --male:#2563eb; --male-soft:#eef3fe; --female:#db2777; --female-soft:#fdf0f6;
   --sound:#0f766e; --sound-soft:#e3f5f1; --sound-line:#9fd9cc;
   --theme:#6d28d9; --theme-soft:#f1ebfd; --theme-line:#cdb8f5;
-  --class-bg:#eef4ff; --class-line:#c9d9fb;
+  --gh:210; /* 학년별 색상각(JS가 설정) */
+  --class-bg:hsl(var(--gh) 90% 96%); --class-line:hsl(var(--gh) 60% 84%); --class-ink:hsl(var(--gh) 65% 36%); --class-bar:hsl(var(--gh) 65% 52%);
+  --roster-bar:#22a05a; --opt-bar:#e09a1a; --result-bar:#2563eb; --hist-bar:#8b5cf6;
   --roster-bg:#eefaf2; --roster-line:#c3e8cf;
   --opt-bg:#fff8ea; --opt-line:#f1dcae;
   --hist-bg:#f6f1fe; --hist-line:#dccbf6;
@@ -32,7 +34,8 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
     --male:#8fb2ff; --male-soft:#1a2440; --female:#f49ac1; --female-soft:#3a1a2a;
     --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
     --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
-    --class-bg:#141c30; --class-line:#2a3a63;
+    --class-bg:hsl(var(--gh) 40% 13%); --class-line:hsl(var(--gh) 35% 27%); --class-ink:hsl(var(--gh) 75% 76%); --class-bar:hsl(var(--gh) 60% 58%);
+    --roster-bar:#3fbf73; --opt-bar:#f0b14a; --result-bar:#6b9bff; --hist-bar:#a78bfa;
     --roster-bg:#12241a; --roster-line:#25472f;
     --opt-bg:#262013; --opt-line:#4a3c1f;
     --hist-bg:#1e1830; --hist-line:#3c2f5e;
@@ -46,7 +49,8 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --male:#8fb2ff; --male-soft:#1a2440; --female:#f49ac1; --female-soft:#3a1a2a;
   --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
   --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
-    --class-bg:#141c30; --class-line:#2a3a63;
+    --class-bg:hsl(var(--gh) 40% 13%); --class-line:hsl(var(--gh) 35% 27%); --class-ink:hsl(var(--gh) 75% 76%); --class-bar:hsl(var(--gh) 60% 58%);
+    --roster-bar:#3fbf73; --opt-bar:#f0b14a; --result-bar:#6b9bff; --hist-bar:#a78bfa;
     --roster-bg:#12241a; --roster-line:#25472f;
     --opt-bg:#262013; --opt-line:#4a3c1f;
     --hist-bg:#1e1830; --hist-line:#3c2f5e;
@@ -67,6 +71,17 @@ header.app p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
 #optSec{background:var(--opt-bg);border-color:var(--opt-line)}
 #histSec{background:var(--hist-bg);border-color:var(--hist-line)}
 :is(#classSec,#rosterSec,#optSec,#histSec) :is(.step,.badge,.table-wrap,.preview){background:var(--surface)}
+#classSec .step,#classSec .badge{color:var(--class-ink)}
+/* 왼쪽 세로 색 막대: 단계 흐름 표시 */
+#classSec{scroll-margin-top:12px} #classSec{--bar:var(--class-bar)} #rosterSec{--bar:var(--roster-bar)} #optSec{--bar:var(--opt-bar)} #resultSec{--bar:var(--result-bar)} #histSec{--bar:var(--hist-bar)}
+.card[id]{box-shadow:inset 5px 0 0 var(--bar, transparent)}
+/* 현재 반 고정 표시줄 */
+.class-bar{position:fixed;top:0;left:0;right:0;z-index:90;display:flex;justify-content:center;pointer-events:none;transform:translateY(-110%);transition:transform .2s}
+.class-bar.show{transform:none}
+.class-bar-in{pointer-events:auto;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);margin-top:8px;padding:6px 8px 6px 12px;border-radius:99px;background:var(--class-bg);border:1px solid var(--class-line);box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:.9rem}
+.class-bar-in b{color:var(--class-ink);white-space:nowrap}
+.class-bar-in span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.class-bar-in .btn{padding:2px 10px;font-size:.8rem;border-radius:99px}
 .card h2{display:flex;gap:10px;align-items:center;font-size:1.05rem;font-weight:700;margin:0 0 16px}
 .step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:.8rem;font-weight:700;flex:none}
 .grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
@@ -222,7 +237,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 @media (max-width:560px){.card{padding:16px}header.app h1{font-size:1.6rem}.btn.big{width:100%}}
 @media print{
   body{background:#fff;color:#000}
-  header.app,footer.app,.card:not(#resultSec),.no-print,.toast,.present,.shuffle,.done-banner,#confetti{display:none!important}
+  header.app,footer.app,.card:not(#resultSec),.class-bar,.no-print,.toast,.present,.shuffle,.done-banner,#confetti{display:none!important}
   #resultSec{border:0;box-shadow:none;padding:0;margin:0;background:#fff}
   .groups{grid-template-columns:repeat(3,1fr)}
   .group{break-inside:avoid;background:#fff;border-color:#999}
@@ -253,6 +268,10 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
     </div>
   </header>
 
+  <div class="class-bar" id="classBar" aria-hidden="true">
+    <div class="class-bar-in"><b id="classBarKey"></b><span id="classBarTask"></span><button class="btn" id="classBarBtn" tabindex="-1">변경</button></div>
+  </div>
+
   <!-- 1. 학급·과제 정보 -->
   <section class="card" id="classSec">
     <h2><span class="step">1</span>반·과제 정보</h2>
@@ -270,10 +289,12 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
         </select>
       </label>
       <label class="field">교과목명
-        <input type="text" id="subject" maxlength="60" placeholder="예: AI융합 간호정보학">
+        <input type="text" id="subject" maxlength="60" placeholder="예: AI융합 간호정보학" list="subjectList" autocomplete="off">
+        <datalist id="subjectList"></datalist>
       </label>
       <label class="field">과제명
-        <input type="text" id="task" maxlength="60" placeholder="예: 1차 팀 프로젝트">
+        <input type="text" id="task" maxlength="60" placeholder="예: 1차 팀 프로젝트" list="taskList" autocomplete="off">
+        <datalist id="taskList"></datalist>
       </label>
     </div>
     <p class="help">현재 반: <span class="badge" id="classBadge"></span> <span id="classInfo"></span></p>
@@ -645,8 +666,11 @@ function updateCounts(){
   $('#genderCount').textContent = p.length ? `(남 ${m} · 여 ${f}${u?` · 미입력 ${u}`:''})` : '';
   updatePreview(); updateClassInfo();
 }
+const GRADE_HUE = {1:205, 2:170, 3:245, 4:335};   // 1학년 하늘 · 2학년 청록 · 3학년 남보라 · 4학년 장미
 function updateClassInfo(){
   $('#classBadge').textContent = classKey();
+  document.documentElement.style.setProperty('--gh', GRADE_HUE[$('#grade').value] ?? 210);
+  updateClassBar();
   const r = db.rosters[classKey()], h = historyOf();
   $('#classInfo').textContent = ` · 저장된 명단 ${r ? r.students.length : 0}명 · 편성 이력 ${h.length}회`;
 }
@@ -1318,8 +1342,49 @@ $('#btnDeleteClass').addEventListener('click', () => {
   delete db.rosters[k]; delete db.history[k]; saveDB(); onClassChange(); toast(`${k} 데이터를 삭제했습니다.`);
 });
 
+/* ===================== 현재 반 고정 표시줄 ===================== */
+function updateClassBar(){
+  $('#classBarKey').textContent = classKey();
+  const sub = $('#subject').value.trim(), task = $('#task').value.trim();
+  $('#classBarTask').textContent = [sub, task].filter(Boolean).join(' · ');
+}
+['subject','task'].forEach(id => $('#'+id).addEventListener('input', updateClassBar));
+$('#classBarBtn').addEventListener('click', () => $('#classSec').scrollIntoView({behavior: reduceMotion() ? 'auto' : 'smooth', block:'start'}));
+if ('IntersectionObserver' in window){
+  new IntersectionObserver(([e]) => {
+    const show = !e.isIntersecting && e.boundingClientRect.top < 0;   // 카드가 위로 사라졌을 때만
+    $('#classBar').classList.toggle('show', show);
+    $('#classBar').setAttribute('aria-hidden', String(!show));
+    $('#classBarBtn').tabIndex = show ? 0 : -1;
+  }, {threshold:0}).observe($('#classSec'));
+}
+
+/* ===================== 교과목명·과제명 추천 목록 ===================== */
+const SUGGEST = {
+  subject: ['AI융합 간호정보학', '디지털리터러시와 AI활용'],
+  task: ['1차 팀 프로젝트', '2차 팀 프로젝트', '조별 토론', '팀 발표', '사례 분석']
+};
+function suggestValues(field){
+  const seen = new Set(), out = [];
+  const add = v => { v = String(v || '').trim(); if (v && !seen.has(v)){ seen.add(v); out.push(v); } };
+  ((db.prefs && db.prefs.recent && db.prefs.recent[field]) || []).forEach(add);   // 최근 입력
+  Object.values(db.history || {}).flat().sort((a,b) => String(b.at).localeCompare(String(a.at))).forEach(h => add(h[field]));   // 편성 이력
+  SUGGEST[field].forEach(add);   // 기본 예시
+  return out.slice(0, 20);
+}
+function renderSuggest(){
+  for (const f of ['subject','task'])
+    $(`#${f}List`).innerHTML = suggestValues(f).map(v => `<option value="${esc(v)}"></option>`).join('');
+}
+['subject','task'].forEach(f => $('#'+f).addEventListener('change', e => {
+  const v = e.target.value.trim(); if (!v) return;
+  const recent = Object.assign({subject:[], task:[]}, db.prefs && db.prefs.recent);
+  recent[f] = [v, ...recent[f].filter(x => x !== v)].slice(0, 12);
+  db.prefs = Object.assign({}, db.prefs, {recent}); saveDB(); renderSuggest();
+}));
+
 /* ===================== 시작 ===================== */
-loadSettings(); loadConstraints(); renderRoster(); renderHistory();
+loadSettings(); loadConstraints(); renderRoster(); renderHistory(); renderSuggest(); updateClassBar();
 </script>
 </body>
 </html>
