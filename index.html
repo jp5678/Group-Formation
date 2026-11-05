@@ -21,6 +21,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --gh:210; /* 학년별 색상각(JS가 설정) */
   --class-bg:hsl(var(--gh) 90% 96%); --class-line:hsl(var(--gh) 60% 84%); --class-ink:hsl(var(--gh) 65% 36%); --class-bar:hsl(var(--gh) 65% 52%);
   --roster-bar:#22a05a; --opt-bar:#e09a1a; --result-bar:#2563eb; --hist-bar:#8b5cf6;
+  --class-step:hsl(var(--gh) 70% 38%); --roster-step:#15803d; --opt-step:#b45309; --result-step:#1d4ed8; --hist-step:#6d28d9; --step-ink:#ffffff; /* 번호 원 */
   --roster-bg:#eefaf2; --roster-line:#c3e8cf;
   --opt-bg:#fff8ea; --opt-line:#f1dcae;
   --hist-bg:#f6f1fe; --hist-line:#dccbf6;
@@ -39,6 +40,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --title:#8ab4ff;
     --class-bg:hsl(var(--gh) 40% 13%); --class-line:hsl(var(--gh) 35% 27%); --class-ink:hsl(var(--gh) 75% 76%); --class-bar:hsl(var(--gh) 60% 58%);
     --roster-bar:#3fbf73; --opt-bar:#f0b14a; --result-bar:#6b9bff; --hist-bar:#a78bfa;
+    --class-step:hsl(var(--gh) 70% 72%); --roster-step:#4ade80; --opt-step:#fbbf24; --result-step:#8ab4ff; --hist-step:#c4b5fd; --step-ink:#0f1115;
     --roster-bg:#12241a; --roster-line:#25472f;
     --opt-bg:#262013; --opt-line:#4a3c1f;
     --hist-bg:#1e1830; --hist-line:#3c2f5e;
@@ -56,6 +58,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --title:#8ab4ff;
     --class-bg:hsl(var(--gh) 40% 13%); --class-line:hsl(var(--gh) 35% 27%); --class-ink:hsl(var(--gh) 75% 76%); --class-bar:hsl(var(--gh) 60% 58%);
     --roster-bar:#3fbf73; --opt-bar:#f0b14a; --result-bar:#6b9bff; --hist-bar:#a78bfa;
+    --class-step:hsl(var(--gh) 70% 72%); --roster-step:#4ade80; --opt-step:#fbbf24; --result-step:#8ab4ff; --hist-step:#c4b5fd; --step-ink:#0f1115;
     --roster-bg:#12241a; --roster-line:#25472f;
     --opt-bg:#262013; --opt-line:#4a3c1f;
     --hist-bg:#1e1830; --hist-line:#3c2f5e;
@@ -80,6 +83,8 @@ header.app p{margin:6px 0 0;color:var(--muted);font-size:1.1rem;font-weight:500}
 #histSec{background:var(--hist-bg);border-color:var(--hist-line)}
 :is(#classSec,#rosterSec,#optSec,#histSec) :is(.step,.badge,.table-wrap,.preview){background:var(--surface)}
 #classSec .step,#classSec .badge{color:var(--class-ink)}
+/* 번호 원: 카드 대표색으로 채우고 숫자는 대비되는 색 */
+#classSec .step{background:var(--class-step);color:var(--step-ink)} #rosterSec .step{background:var(--roster-step);color:var(--step-ink)} #optSec .step{background:var(--opt-step);color:var(--step-ink)} #resultSec .step{background:var(--result-step);color:var(--step-ink)} #histSec .step{background:var(--hist-step);color:var(--step-ink)}
 /* 왼쪽 세로 색 막대: 단계 흐름 표시 */
 #classSec{scroll-margin-top:12px} #classSec{--bar:var(--class-bar)} #rosterSec{--bar:var(--roster-bar)} #optSec{--bar:var(--opt-bar)} #resultSec{--bar:var(--result-bar)} #histSec{--bar:var(--hist-bar)}
 .card[id]{box-shadow:inset 5px 0 0 var(--bar, transparent)}
