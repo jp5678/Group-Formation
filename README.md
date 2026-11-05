@@ -29,11 +29,10 @@
 
 ## GitHub Pages 자동 배포
 
-`index` 브랜치에 푸시하면 `.github/workflows/deploy-pages.yml`이 `index.html`을 GitHub Pages에 자동으로 배포합니다.
+이 저장소는 GitHub Pages가 **Deploy from a branch (`index` / root)** 로 설정되어 있어, `index` 브랜치에 푸시하면 1~2분 안에 자동으로 다시 배포됩니다.
 
-- 처음 한 번만: 저장소 **Settings → Pages → Build and deployment → Source**를 **GitHub Actions**로 설정합니다.
-- 배포 주소: `https://jp5678.github.io/Group-Formation/`
-- 수동 재배포: **Actions → GitHub Pages 자동 배포 → Run workflow**
+- 배포 주소: https://jp5678.github.io/Group-Formation/
+- 배포 상태 확인: 저장소 **Actions → pages build and deployment**
 
 ## 개인정보
 
