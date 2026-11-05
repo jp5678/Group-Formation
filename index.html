@@ -148,6 +148,10 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 .sound-btn[aria-pressed="false"]{background:var(--surface);color:var(--muted);border-color:var(--border)}
 .theme-btn{background:var(--theme-soft);color:var(--theme);border-color:var(--theme-line);font-weight:600}
 .theme-btn:hover{background:var(--theme-soft);border-color:var(--theme);filter:brightness(.97)}
+/* 원형 아이콘 버튼 */
+.tool-btn{width:38px;height:38px;padding:0;border-radius:50%;display:inline-grid;place-items:center}
+.tool-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tool-btn [hidden]{display:none}
 /* 편성 연출 */
 .shuffle{position:fixed;inset:0;z-index:150;display:grid;place-items:center;background:rgba(15,17,21,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer}
 .shuffle[hidden]{display:none}
@@ -207,8 +211,14 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
       <p>함께 공부할 동료를 만나는 곳</p>
     </div>
     <div class="header-tools">
-      <button class="btn small sound-btn" id="btnSound" aria-pressed="true">소리 켜짐</button>
-      <button class="btn small theme-btn" id="btnTheme" aria-label="화면 테마 전환">라이트 모드</button>
+      <button class="btn tool-btn sound-btn" id="btnSound" aria-pressed="true" aria-label="소리 켜짐" title="소리 켜짐 (누르면 끔)">
+        <svg class="i-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+        <svg class="i-off" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
+      </button>
+      <button class="btn tool-btn theme-btn" id="btnTheme" aria-label="라이트 모드" title="라이트 모드 (누르면 다크 모드)">
+        <svg class="i-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="i-dark" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
     </div>
   </header>
 
@@ -953,7 +963,11 @@ const Sound = (() => {
   };
 })();
 function updateSoundBtn(){
-  const b = $('#btnSound'); b.textContent = Sound.on ? '소리 켜짐' : '소리 꺼짐'; b.setAttribute('aria-pressed', String(Sound.on));
+  const b = $('#btnSound'), on = Sound.on;
+  b.querySelector('.i-on').toggleAttribute('hidden', !on); b.querySelector('.i-off').toggleAttribute('hidden', on);
+  b.setAttribute('aria-pressed', String(on));
+  b.setAttribute('aria-label', on ? '소리 켜짐' : '소리 꺼짐');
+  b.title = on ? '소리 켜짐 (누르면 끔)' : '소리 꺼짐 (누르면 켬)';
 }
 
 /* ===================== 컨페티 ===================== */
@@ -1206,8 +1220,9 @@ function applyTheme(){
   const t = currentTheme();
   document.documentElement.dataset.theme = t;
   const b = $('#btnTheme');
-  b.textContent = t === 'dark' ? '다크 모드' : '라이트 모드';
-  b.title = t === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환';
+  b.querySelector('.i-light').toggleAttribute('hidden', t === 'dark'); b.querySelector('.i-dark').toggleAttribute('hidden', t !== 'dark');
+  b.setAttribute('aria-label', t === 'dark' ? '다크 모드' : '라이트 모드');
+  b.title = t === 'dark' ? '다크 모드 (누르면 라이트 모드)' : '라이트 모드 (누르면 다크 모드)';
 }
 $('#btnTheme').addEventListener('click', () => {
   db.prefs = Object.assign({}, db.prefs, {theme: currentTheme() === 'dark' ? 'light' : 'dark'}); saveDB(); applyTheme();
