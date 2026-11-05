@@ -5,22 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>팀 스테이션 · 청암대학교 간호학과</title>
 <meta name="description" content="팀 스테이션 — 학년·반별 명단으로 조(팀)를 무작위 편성하고 조장을 선정하는 웹앱. 성별 균형, 이전 조원 중복 회피, 조장 순환, 편성 이력 관리 지원.">
+<script>
+/* 첫 화면 깜빡임 방지: 저장된 테마를 렌더링 전에 적용 */
+try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) || {}).prefs; if (t && (t.theme === 'light' || t.theme === 'dark')) document.documentElement.dataset.theme = t.theme; }catch(e){}
+</script>
 <style>
 :root{
   --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f2f4f7; --text:#111827; --muted:#6b7280; --border:#e5e7eb;
   --primary:#2563eb; --primary-ink:#ffffff; --primary-soft:#eef3fe;
   --accent:#d97706; --accent-soft:#fdf6e8; --danger:#dc2626;
   --male:#2563eb; --male-soft:#eef3fe; --female:#db2777; --female-soft:#fdf0f6;
+  --sound:#0f766e; --sound-soft:#e3f5f1; --sound-line:#9fd9cc;
+  --theme:#6d28d9; --theme-soft:#f1ebfd; --theme-line:#cdb8f5;
   color-scheme:light;
 }
+/* 다크 팔레트: 시스템 설정이 다크이면서 사용자가 라이트를 고르지 않았거나, 사용자가 다크를 고른 경우 */
 @media (prefers-color-scheme: dark){
-  :root{
+  :root:not([data-theme="light"]){
     --bg:#0f1115; --surface:#171a21; --surface-2:#1f232c; --text:#e5e7eb; --muted:#9ca3af; --border:#2a2f3a;
     --primary:#6b9bff; --primary-ink:#0b1020; --primary-soft:#1a2440;
     --accent:#f5b14c; --accent-soft:#2e2412; --danger:#f87171;
     --male:#8fb2ff; --male-soft:#1a2440; --female:#f49ac1; --female-soft:#3a1a2a;
+    --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
+    --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
     color-scheme:dark;
   }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115; --surface:#171a21; --surface-2:#1f232c; --text:#e5e7eb; --muted:#9ca3af; --border:#2a2f3a;
+  --primary:#6b9bff; --primary-ink:#0b1020; --primary-soft:#1a2440;
+  --accent:#f5b14c; --accent-soft:#2e2412; --danger:#f87171;
+  --male:#8fb2ff; --male-soft:#1a2440; --female:#f49ac1; --female-soft:#3a1a2a;
+  --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
+  --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
+  color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
@@ -104,11 +122,15 @@ details.adv summary{cursor:pointer;font-weight:600;color:var(--muted)}
 .present-grid .pcard{--h:215;background:hsl(var(--h) 80% 96.5%);border-color:hsl(var(--h) 50% 86%)}
 .pcard h3{color:hsl(var(--h) 50% 36%)}
 @media (prefers-color-scheme: dark){
-  .group,.present-grid .pcard{background:hsl(var(--h) 22% 14%);border-color:hsl(var(--h) 22% 25%)}
-  .group h3,.pcard h3{color:hsl(var(--h) 70% 76%)}
-  .group .chip{background:rgba(255,255,255,.05)}
-  .group .chip.is-leader{background:var(--accent-soft)}
+  :root:not([data-theme="light"]) .group,:root:not([data-theme="light"]) .present-grid .pcard{background:hsl(var(--h) 22% 14%);border-color:hsl(var(--h) 22% 25%)}
+  :root:not([data-theme="light"]) .group h3,:root:not([data-theme="light"]) .pcard h3{color:hsl(var(--h) 70% 76%)}
+  :root:not([data-theme="light"]) .group .chip{background:rgba(255,255,255,.05)}
+  :root:not([data-theme="light"]) .group .chip.is-leader{background:var(--accent-soft)}
 }
+:root[data-theme="dark"] .group,:root[data-theme="dark"] .present-grid .pcard{background:hsl(var(--h) 22% 14%);border-color:hsl(var(--h) 22% 25%)}
+:root[data-theme="dark"] .group h3,:root[data-theme="dark"] .pcard h3{color:hsl(var(--h) 70% 76%)}
+:root[data-theme="dark"] .group .chip{background:rgba(255,255,255,.05)}
+:root[data-theme="dark"] .group .chip.is-leader{background:var(--accent-soft)}
 .selecting .group{outline:2px dashed transparent;outline-offset:2px}
 .selecting .group:hover,.group.drop-target{outline:2px dashed var(--primary)}
 .empty-group{color:var(--muted);font-size:.85rem;padding:6px}
@@ -119,7 +141,13 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 .copyright{margin:24px 0 0;padding-top:16px;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:.85rem}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:calc(100% - 32px);text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%)}
-.sound-btn{flex:none}
+.header-tools{display:flex;gap:6px;flex:none;flex-wrap:wrap;justify-content:flex-end}
+/* 소리 버튼(청록)·테마 버튼(보라): 서로 다른 색으로 구분 */
+.sound-btn{background:var(--sound-soft);color:var(--sound);border-color:var(--sound-line);font-weight:600}
+.sound-btn:hover{background:var(--sound-soft);border-color:var(--sound);filter:brightness(.97)}
+.sound-btn[aria-pressed="false"]{background:var(--surface);color:var(--muted);border-color:var(--border)}
+.theme-btn{background:var(--theme-soft);color:var(--theme);border-color:var(--theme-line);font-weight:600}
+.theme-btn:hover{background:var(--theme-soft);border-color:var(--theme);filter:brightness(.97)}
 /* 편성 연출 */
 .shuffle{position:fixed;inset:0;z-index:150;display:grid;place-items:center;background:rgba(15,17,21,.9);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;cursor:pointer}
 .shuffle[hidden]{display:none}
@@ -178,7 +206,10 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
       <h1>팀 스테이션</h1>
       <p>함께 공부할 동료를 만나는 곳</p>
     </div>
-    <button class="btn small sound-btn" id="btnSound" aria-pressed="true">소리 켜짐</button>
+    <div class="header-tools">
+      <button class="btn small sound-btn" id="btnSound" aria-pressed="true">소리 켜짐</button>
+      <button class="btn small theme-btn" id="btnTheme" aria-label="화면 테마 전환">라이트 모드</button>
+    </div>
   </header>
 
   <!-- 1. 학급·과제 정보 -->
@@ -1163,6 +1194,27 @@ $('#pClose').addEventListener('click', closePresent);
 $('#shuffle').addEventListener('click', skipShuffle);
 $('#btnSound').addEventListener('click', () => { Sound.set(!Sound.on); updateSoundBtn(); if (Sound.on) Sound.pop(); });
 updateSoundBtn();
+
+/* ===================== 라이트/다크 테마 ===================== */
+const darkMQ = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+function currentTheme(){
+  const t = db.prefs && db.prefs.theme;
+  if (t === 'light' || t === 'dark') return t;
+  return darkMQ && darkMQ.matches ? 'dark' : 'light';   // 선택 전에는 시스템 설정을 따름
+}
+function applyTheme(){
+  const t = currentTheme();
+  document.documentElement.dataset.theme = t;
+  const b = $('#btnTheme');
+  b.textContent = t === 'dark' ? '다크 모드' : '라이트 모드';
+  b.title = t === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환';
+}
+$('#btnTheme').addEventListener('click', () => {
+  db.prefs = Object.assign({}, db.prefs, {theme: currentTheme() === 'dark' ? 'light' : 'dark'}); saveDB(); applyTheme();
+});
+if (darkMQ && darkMQ.addEventListener) darkMQ.addEventListener('change', () => { if (!(db.prefs && db.prefs.theme)) applyTheme(); });
+applyTheme();
+
 document.addEventListener('keydown', e => {
   if (shuffleDone){ if ([' ','Enter','Escape'].includes(e.key)){ e.preventDefault(); skipShuffle(); } return; }
   if (!$('#present').hidden){
