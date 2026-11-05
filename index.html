@@ -865,7 +865,7 @@ function orderedMembers(g){
 function renderResult(){
   const sec = $('#resultSec');
   $('#histStep').textContent = result ? '5' : '4';   // 결과 카드가 숨겨지면 이력이 4단계
-  if (!result){ sec.hidden = true; return; }
+  if (!result){ sec.hidden = true; $('#groups').innerHTML = ''; return; }
   sec.hidden = false;
   const N = result.names, total = result.groups.reduce((t,g)=>t+g.members.length,0);
   $('#resultMeta').innerHTML = `<span><strong>${esc(result.key)}</strong></span>
@@ -1216,9 +1216,15 @@ $('#btnSample').addEventListener('click', () => {
 });
 $('#btnAllPresent').addEventListener('click', () => { roster().students.forEach(s => s.present = true); saveDB(); renderRoster(); });
 $('#btnClearRoster').addEventListener('click', () => {
-  if (!roster().students.length) return;
-  if (!confirm(`${classKey()} 명단을 모두 지울까요? (편성 이력은 유지됩니다)`)) return;
-  roster().students = []; saveDB(); renderRoster();
+  if (!roster().students.length && !result) return;
+  const unsaved = result && !result.histId;   // 이력에 저장하지 않은 결과
+  const msg = `${classKey()} 명단을 모두 지울까요?\n화면의 편성 결과도 함께 지워집니다.`
+    + (unsaved ? '\n※ 현재 편성 결과는 아직 이력에 저장되지 않아 되돌릴 수 없습니다.' : '')
+    + '\n(저장된 편성 이력은 유지됩니다)';
+  if (!confirm(msg)) return;
+  roster().students = []; saveDB();
+  result = null; sel = null; hideBanner();   // 편성 결과도 비움
+  renderRoster(); renderResult();
 });
 $('#rosterBody').addEventListener('change', e => {
   const tr = e.target.closest('tr[data-i]'), f = e.target.dataset.f; if (!tr || !f) return;
