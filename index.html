@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>간호학과 조 편성기</title>
+<title>청암대학교 간호학과 조(팀) 자동 편성기</title>
 <meta name="description" content="학년·반별 명단으로 조(팀)를 무작위 편성하고 조장을 선정하는 웹앱. 성별 균형, 이전 조원 중복 회피, 조장 순환, 편성 이력 관리 지원.">
 <style>
 :root{
@@ -137,7 +137,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 <body>
 <div class="wrap">
   <header class="app">
-    <h1>간호학과 <span>조 편성기</span></h1>
+    <h1>청암대학교 간호학과 <span>조(팀) 자동 편성기</span></h1>
     <p>학년·반을 고르고 명단을 넣으면 공정한 무작위 방식으로 조(팀)를 편성하고 조장을 정합니다.</p>
   </header>
 
@@ -152,7 +152,10 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
         </select>
       </label>
       <label class="field">반
-        <input type="text" id="cls" value="A" maxlength="12" placeholder="예: A, 1, 가">
+        <select id="cls">
+          <option value="A">A반</option><option value="B">B반</option><option value="C">C반</option>
+          <option value="D">D반</option><option value="E">E반</option><option value="F">F반</option>
+        </select>
       </label>
       <label class="field">교과목명
         <input type="text" id="subject" maxlength="60" placeholder="예: AI융합 간호정보학">
@@ -288,9 +291,9 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
       <button class="btn small" id="btnBackup">전체 데이터 백업 (JSON)</button>
       <label class="btn small" for="restoreFile">백업 복원</label>
       <input type="file" id="restoreFile" accept=".json,application/json" hidden>
-      <button class="btn small danger" id="btnDeleteClass">이 학급 데이터 삭제</button>
+      <button class="btn small danger" id="btnDeleteClass">이 반 데이터 삭제</button>
     </div>
-    <p>🔒 명단과 이력은 이 브라우저에만 저장되며 어떤 서버로도 전송되지 않습니다. 다른 PC에서 쓰려면 백업 파일을 옮겨 복원하세요. 공용 PC에서는 사용 후 ‘이 학급 데이터 삭제’를 권장합니다.</p>
+    <p>🔒 명단과 이력은 이 브라우저에만 저장되며 어떤 서버로도 전송되지 않습니다. 다른 PC에서 쓰려면 백업 파일을 옮겨 복원하세요. 공용 PC에서는 사용 후 ‘이 반 데이터 삭제’를 권장합니다.</p>
     <p>무작위 방식: 브라우저 암호학적 난수(crypto.getRandomValues)로 편성 번호를 만들고, 그 번호를 시드로 한 Fisher–Yates 셔플로 섞습니다.</p>
   </footer>
 </div>
@@ -391,7 +394,7 @@ const pick = (arr, rng) => arr[Math.floor(rng()*arr.length)];
 
 /* ===================== 학급·명단 ===================== */
 function classKey(){
-  const c = $('#cls').value.trim().replace(/반$/, '') || 'A';
+  const c = $('#cls').value || 'A';
   return `${$('#grade').value}학년 ${c}반`;
 }
 function roster(){
@@ -567,6 +570,7 @@ function saveSettings(){
 function loadSettings(){
   const s = db.settings || {};
   for (const id of SETTING_IDS){ if (s[id] == null) continue; const el = $('#'+id); if (el.type === 'checkbox') el.checked = s[id]; else el.value = s[id]; }
+  if (!$('#cls').value) $('#cls').value = 'A'; // 이전 버전의 자유 입력 값 대비
   if (s.mode) document.querySelector(`input[name=mode][value=${s.mode}]`).checked = true;
   if (s.rem) document.querySelector(`input[name=rem][value=${s.rem}]`).checked = true;
 }
@@ -839,7 +843,6 @@ function onClassChange(){ result = null; sel = null; saveSettings(); loadConstra
 function loadConstraints(){ const r = db.rosters[classKey()]; $('#sepText').value = r?.sep || ''; $('#fixedText').value = r?.fixed || ''; }
 $('#grade').addEventListener('change', onClassChange);
 $('#cls').addEventListener('change', onClassChange);
-$('#cls').addEventListener('input', updateClassInfo);
 ['subject','task','size','count','leader','optGender','optTag','optAvoid'].forEach(id => {
   $('#'+id).addEventListener('input', () => { saveSettings(); updatePreview(); });
   $('#'+id).addEventListener('change', () => { saveSettings(); updatePreview(); });
