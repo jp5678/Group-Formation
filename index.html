@@ -1295,9 +1295,11 @@ $('#histList').addEventListener('click', e => {
     result = {key:k, subject:h.subject, task:h.task, seed:h.seed, at:h.at, names:h.names, edited:h.edited, dirty:false, histId:h.id,
       groups: h.groups.map(g => ({members:[...g.members], leader:g.leader})), warnings:[], checks:null, eval:{}};
     sel = null; hideBanner(); renderResult(); $('#resultSec').scrollIntoView({behavior:'smooth'});
-  } else if (confirm(`${fmtDate(h.at)} 편성 이력을 삭제할까요?`)){
+  } else {
+    const shown = result && result.histId === id;   // 화면에 떠 있는 결과가 이 이력인지
+    if (!confirm(`${fmtDate(h.at)} 편성 이력을 삭제할까요?` + (shown ? '\n화면의 편성 결과도 함께 지워집니다.' : ''))) return;
     db.history[k] = historyOf(k).filter(x => x.id !== id); saveDB();
-    if (result && result.histId === id){ result.histId = null; result.dirty = true; renderResult(); }
+    if (shown){ result = null; sel = null; hideBanner(); renderResult(); }   // 편성 결과도 삭제
     renderHistory(); renderRoster();
   }
 });
