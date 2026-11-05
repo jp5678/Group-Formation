@@ -157,10 +157,17 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 .shuffle[hidden]{display:none}
 .shuffle-box{text-align:center;padding:16px}
 .shuffle-label{font-size:.95rem;letter-spacing:.3em;opacity:.7}
-.shuffle-name{font-size:clamp(2.6rem,9vw,5.5rem);font-weight:800;letter-spacing:-.02em;margin:10px 0;min-height:1.3em}
+.shuffle-name{font-size:clamp(2rem,6vw,3.6rem);font-weight:800;letter-spacing:-.02em;margin:6px 0 0;min-height:1.3em}
 .shuffle-name.tick{animation:tick .09s ease-out}
-.shuffle-bar{width:min(320px,70vw);height:4px;margin:18px auto 0;border-radius:99px;background:rgba(255,255,255,.18);overflow:hidden}
-.shuffle-bar i{display:block;height:100%;width:0;background:#fff;border-radius:inherit}
+/* 룰렛 */
+.wheel-wrap{position:relative;width:min(60vh,86vw,520px);aspect-ratio:1;margin:14px auto 0}
+.wheel-wrap svg{display:block;width:100%;height:100%;overflow:visible}
+.wheel-rot{will-change:transform}
+.wheel-slice{stroke:rgba(15,17,21,.55);stroke-width:.4;transition:opacity .25s}
+.wheel-label{fill:#fff;font-weight:700;dominant-baseline:central;paint-order:stroke;stroke:rgba(0,0,0,.25);stroke-width:.6}
+.wheel-wrap.won .wheel-slice:not(.win){opacity:.28}
+.wheel-pin{fill:#fff;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.wheel-hub{fill:#0f1115;stroke:#fff;stroke-width:1.6}
 .shuffle-skip{margin-top:14px;font-size:.8rem;opacity:.5}
 @keyframes tick{0%{transform:translateY(-14px) scale(.96);opacity:.4}100%{transform:none;opacity:1}}
 .done-banner{display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0 12px;padding:14px;border-radius:10px;background:var(--primary);color:var(--primary-ink);font-size:1.15rem;font-weight:800}
@@ -396,8 +403,8 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 <div class="shuffle" id="shuffle" hidden aria-hidden="true">
   <div class="shuffle-box">
     <div class="shuffle-label">조 편성 중</div>
+    <div class="wheel-wrap" id="wheel"></div>
     <div class="shuffle-name" id="shuffleName"></div>
-    <div class="shuffle-bar"><i id="shuffleBar"></i></div>
     <div class="shuffle-skip">화면을 누르면 건너뜁니다</div>
   </div>
 </div>
@@ -1011,10 +1018,10 @@ function confetti(){
 /* ===================== 편성 완료 연출 ===================== */
 let shuffleTimer = 0, shuffleDone = null, celebrateTimer = 0;
 function celebrate(present){
-  clearTimeout(shuffleTimer); clearTimeout(celebrateTimer);
+  clearTimeout(shuffleTimer); cancelAnimationFrame(shuffleTimer); clearTimeout(celebrateTimer);
   Sound.unlock();
   const finish = () => {
-    shuffleDone = null; clearTimeout(shuffleTimer);
+    shuffleDone = null; clearTimeout(shuffleTimer); cancelAnimationFrame(shuffleTimer);
     $('#shuffle').hidden = true;
     renderResult();
     const grid = $('#groups'), total = result.groups.reduce((t,g)=>t+g.members.length,0);
@@ -1029,18 +1036,44 @@ function celebrate(present){
     confetti();
   };
   if (reduceMotion()){ finish(); return; }
-  const names = present.map(s => s.name), ov = $('#shuffle'), nm = $('#shuffleName'), bar = $('#shuffleBar');
-  const DUR = 1700, t0 = performance.now();
-  ov.hidden = false; shuffleDone = finish;
-  (function step(){
-    const p = Math.min(1, (performance.now() - t0) / DUR);
-    nm.textContent = names[Math.floor(Math.random()*names.length)];
+  const ov = $('#shuffle'), nm = $('#shuffleName'), wrap = $('#wheel');
+  const names = shuffle(present.map(s => s.name), Math.random);
+  const n = names.length, seg = 360 / n;
+  // 룰렛 그리기: 칸 = 학생, 색 = 조 카드 색조를 순환
+  const R = 96, pt = (a, r) => [r*Math.sin(a*Math.PI/180), -r*Math.cos(a*Math.PI/180)];
+  const fs = Math.max(3.2, Math.min(9, 2*Math.PI*62/n*.62));
+  let svg = `<svg viewBox="-100 -108 200 208" aria-hidden="true"><g class="wheel-rot">`;
+  names.forEach((name, k) => {
+    const a0 = k*seg, a1 = a0 + seg, [x0,y0] = pt(a0,R), [x1,y1] = pt(a1,R), mid = a0 + seg/2;
+    const d = n === 1 ? `M0 ${-R}A${R} ${R} 0 1 1 0 ${R}A${R} ${R} 0 1 1 0 ${-R}Z`
+                      : `M0 0L${x0.toFixed(2)} ${y0.toFixed(2)}A${R} ${R} 0 ${seg > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}Z`;
+    svg += `<path class="wheel-slice" data-k="${k}" d="${d}" fill="hsl(${groupHue(k)} 62% 52%)"/>`
+         + `<text class="wheel-label" transform="rotate(${(mid-90).toFixed(2)}) translate(${R-6} 0)" text-anchor="end" font-size="${fs.toFixed(2)}">${esc(name)}</text>`;   // 중심→바깥 방향으로 읽힘
+  });
+  svg += `</g><circle class="wheel-hub" r="13"/><path class="wheel-pin" d="M-7 -106L7 -106L0 -88Z"/></svg>`;
+  wrap.innerHTML = svg; wrap.classList.remove('won');
+  const rot = wrap.querySelector('.wheel-rot');
+  // 회전: 5~6바퀴 + 임의 위치, ease-out(점점 느려짐)
+  const target = Math.floor(Math.random()*n);
+  const end = 360*(5 + Math.floor(Math.random()*2)) + (360 - (target*seg + seg*(.2 + Math.random()*.6)));
+  const DUR = 3200, t0 = performance.now();
+  let last = -1, lastSound = 0;
+  ov.hidden = false; shuffleDone = finish; nm.textContent = '';
+  (function frame(now){
+    if (shuffleDone !== finish) return;
+    const p = Math.min(1, (now - t0) / DUR), ang = end * (1 - Math.pow(1 - p, 4));
+    rot.setAttribute('transform', `rotate(${ang.toFixed(2)})`);
+    const k = Math.floor(((360 - ang % 360) % 360) / seg) % n;   // 바늘(12시) 아래 칸
+    if (k !== last){
+      last = k; nm.textContent = names[k];
+      if (now - lastSound > 45){ Sound.tick(p); lastSound = now; }
+    }
+    if (p < 1){ shuffleTimer = requestAnimationFrame(frame); return; }
+    wrap.querySelector(`.wheel-slice[data-k="${k}"]`).classList.add('win'); wrap.classList.add('won');
     nm.classList.remove('tick'); void nm.offsetWidth; nm.classList.add('tick');
-    bar.style.width = (p*100) + '%';
-    Sound.tick(p);
-    if (p >= 1){ shuffleTimer = setTimeout(finish, 120); return; }
-    shuffleTimer = setTimeout(step, 55 + p*p*150);   // 점점 느려지며 멈춤
-  })();
+    Sound.pop();
+    shuffleTimer = setTimeout(finish, 650);
+  })(t0);
 }
 function skipShuffle(){ if (shuffleDone) shuffleDone(); }
 function hideBanner(){ $('#doneBanner').hidden = true; }
