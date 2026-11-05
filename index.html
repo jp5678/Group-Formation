@@ -17,6 +17,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --male:#2563eb; --male-soft:#eef3fe; --female:#db2777; --female-soft:#fdf0f6;
   --sound:#0f766e; --sound-soft:#e3f5f1; --sound-line:#9fd9cc;
   --theme:#6d28d9; --theme-soft:#f1ebfd; --theme-line:#cdb8f5;
+  --class-bg:#eef4ff; --class-line:#c9d9fb;
   color-scheme:light;
 }
 /* 다크 팔레트: 시스템 설정이 다크이면서 사용자가 라이트를 고르지 않았거나, 사용자가 다크를 고른 경우 */
@@ -28,6 +29,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
     --male:#8fb2ff; --male-soft:#1a2440; --female:#f49ac1; --female-soft:#3a1a2a;
     --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
     --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
+    --class-bg:#141c30; --class-line:#2a3a63;
     color-scheme:dark;
   }
 }
@@ -38,6 +40,7 @@ try{ const t = (JSON.parse(localStorage.getItem('nursing-group-formation:v1')) |
   --male:#8fb2ff; --male-soft:#1a2440; --female:#f49ac1; --female-soft:#3a1a2a;
   --sound:#5eead4; --sound-soft:#10302b; --sound-line:#1f5a50;
   --theme:#c4b5fd; --theme-soft:#241a3d; --theme-line:#46357a;
+    --class-bg:#141c30; --class-line:#2a3a63;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -48,6 +51,9 @@ header.app .eyebrow{font-size:.82rem;font-weight:600;color:var(--muted);letter-s
 header.app h1{margin:2px 0 0;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;line-height:1.2}
 header.app p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-top:14px}
+/* 1. 반·과제 정보: 작업 기준 영역을 연한 파랑으로 구분 */
+#classSec{background:var(--class-bg);border-color:var(--class-line)}
+#classSec .step,#classSec .badge{background:var(--surface)}
 .card h2{display:flex;gap:10px;align-items:center;font-size:1.05rem;font-weight:700;margin:0 0 16px}
 .step{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--primary-soft);color:var(--primary);font-size:.8rem;font-weight:700;flex:none}
 .grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
