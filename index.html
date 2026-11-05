@@ -170,6 +170,12 @@ details.adv summary{cursor:pointer;font-weight:600;color:var(--muted)}
 .group header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .group h3{margin:0;font-size:1.1rem;font-weight:700}
 .group .cnt{font-size:.85rem;color:var(--muted)}
+/* 조 이름(별칭): 누르면 직접 수정 */
+.nick{font:inherit;font-size:.82em;font-weight:700;color:inherit;opacity:.9;background:none;border:0;border-bottom:1px dashed currentColor;padding:0 1px;margin-left:3px;cursor:text;border-radius:0}
+.nick:hover{opacity:1;background:rgba(255,255,255,.35)}
+.nick.empty{font-weight:500;opacity:.55}
+.nick-edit{font:inherit;font-size:.82em;font-weight:700;width:9.5em;max-width:100%;padding:1px 6px;margin-left:3px;border-radius:6px}
+.group header h3{display:flex;align-items:baseline;flex-wrap:wrap;min-width:0}
 .leader-line{font-size:.85rem;color:var(--muted);margin-top:2px}
 .leader-line em{font-style:normal}
 .group ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
@@ -274,6 +280,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 .chat-fab .fab-label{position:absolute;right:66px;white-space:nowrap;background:var(--surface);color:var(--text);border:1px solid var(--border);padding:4px 10px;border-radius:99px;font-size:.82rem;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.08);pointer-events:none}
 .chat-fab[aria-expanded="true"] .fab-label{display:none}
 .chat-panel{position:fixed;right:max(20px, env(safe-area-inset-right, 0px));bottom:calc(max(20px, env(safe-area-inset-bottom, 0px)) + 70px);z-index:80;width:min(380px, calc(100vw - 32px));height:min(560px, calc(100vh - 120px));display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.18);overflow:hidden}
+.chat-panel[hidden]{display:none}   /* display:flex가 hidden 속성을 덮지 않도록 */
 .chat-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--primary);color:var(--primary-ink)}
 .chat-head svg.brand-mini{width:30px;height:30px;flex:none}
 .chat-head b{font-size:1rem;display:block;line-height:1.2}
@@ -319,6 +326,7 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
   .group .chip.is-leader{background:var(--accent-soft)!important}
   .chip .nm{color:var(--text)!important}
   .star{display:none}
+  .nick{border:0}.nick.empty{display:none}
   .chip.is-leader .nm::before{content:"★ ";color:var(--accent)}
   .g-m{background:var(--male-soft)!important;color:var(--male)!important}
   .g-f{background:var(--female-soft)!important;color:var(--female)!important}
@@ -496,13 +504,14 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
     <div class="evals" id="resultEvals"></div>
     <div class="row no-print">
       <button class="btn" id="btnReshuffle">다시 섞기</button>
+      <button class="btn" id="btnRenameAll" title="조 구성은 그대로 두고 조 이름만 새로 뽑습니다">조 이름 다시 뽑기</button>
       <button class="btn" id="btnPresent">발표 모드</button>
       <button class="btn" id="btnCopy">텍스트 복사</button>
       <button class="btn" id="btnCSV">CSV 저장</button>
       <button class="btn" id="btnPrint">인쇄</button>
       <button class="btn primary" id="btnSaveHist">이력에 저장</button>
     </div>
-    <p class="help no-print">학생을 눌러 선택한 뒤 <b>다른 조의 학생</b>을 누르면 서로 자리를 바꾸고, <b>다른 조의 빈 곳</b>을 누르면 그 조로 옮깁니다(PC에서는 끌어다 놓기도 가능). ☆를 누르면 조장으로 지정됩니다.</p>
+    <p class="help no-print">학생을 눌러 선택한 뒤 <b>다른 조의 학생</b>을 누르면 서로 자리를 바꾸고, <b>다른 조의 빈 곳</b>을 누르면 그 조로 옮깁니다(PC에서는 끌어다 놓기도 가능). ☆를 누르면 조장으로 지정됩니다. 조 이름(밑줄)을 누르면 직접 고칠 수 있습니다.</p>
     <div class="groups" id="groups"></div>
   </section>
 
@@ -952,17 +961,36 @@ function runFormation(forceNewSeed){
     if (ev.score === 0) break;
   }
   const leaders = pickLeaders(best.gs, o.leader, rng, ctx);
+  const nicks = pickTeamNames(best.gs.length, makeRng(seed + '|team-names'));
   const names = {};
   for (const s of present) names[s.id] = {name:s.name, gender:s.gender||'', tag:s.tag||''};
   result = {
     key, subject: $('#subject').value.trim(), task: $('#task').value.trim(), seed, at: new Date().toISOString(),
     opts: o, eval: best.ev, warnings: ctx.warnings, names, edited:false, dirty:true, histId:null,
-    groups: best.gs.map((g,i) => ({members: g.map(s=>s.id), leader: leaders[i]})),
+    groups: best.gs.map((g,i) => ({members: g.map(s=>s.id), leader: leaders[i], nick: nicks[i]})),
     checks: {gender:o.gender, tag:o.tag, avoid:o.avoid, hasSep:ctx.hasSep, hasHistory:ctx.hasHistory}
   };
-  sel = null;
+  sel = null; editingNick = -1;
   celebrate(present);
 }
+
+/* ===================== 조 이름(별칭) ===================== */
+// '~조'로 끝나는 말장난 이름. 놀림·부정적 의미가 없는 것만 사용
+const TEAM_NAMES = [
+  '생각나조','최고조','잘하조','해보조','힘내조','해내조','뭉치조','빛나조','꿈꾸조','함께하조',
+  '반짝이조','똑똑하조','즐겁조','멋지조','대단하조','설레조','도와주조','믿어보조','행복하조','끝내주조',
+  '통하조','신나조','대박나조','꿀잼이조','술술풀리조','쑥쑥크조','든든하조','끈끈하조','척척하조','웃어보조',
+  '달려보조','날아보조','머리맞대조','손잡조','박수치조','화이팅하조','열정넘치조','웃음꽃피조','계획짜조','마감지키조',
+  '질문하조','토론하조','아이디어내조','발표잘하조','칭찬받조','에이쁠받조','장학금받조','국시붙조','합격하조','공부하조',
+  '간호하조','돌봐주조','손씻조','혈압재조','체온재조','맥박뛰조','기록하조','소독하조','인계잘하조','라운딩하조'
+];
+function pickTeamNames(n, rng, avoid = []){
+  const pool = shuffle(TEAM_NAMES.filter(x => !avoid.includes(x)), rng);
+  const all = pool.length >= n ? pool : pool.concat(shuffle(TEAM_NAMES, rng));
+  return Array.from({length:n}, (_, i) => i < all.length ? all[i] : `${all[i % all.length]}${Math.floor(i / all.length) + 1}`);
+}
+const teamLabel = (g, i) => `${i+1}조${g.nick ? `(${g.nick})` : ''}`;
+let editingNick = -1;   // 이름을 수정 중인 조 번호
 
 /* ===================== 렌더: 결과 ===================== */
 const GROUP_HUES = [215, 160, 35, 275, 345, 190, 95, 15, 245, 55, 310, 130];
@@ -995,7 +1023,9 @@ function renderResult(){
   const nameCount = new Map(); Object.values(N).forEach(s => nameCount.set(s.name, (nameCount.get(s.name)||0)+1));
   $('#groups').classList.toggle('selecting', !!sel);
   $('#groups').innerHTML = result.groups.map((g,gi) => `<article class="group" data-g="${gi}" style="--i:${gi};--h:${groupHue(gi)}">
-      <header><h3>${gi+1}조</h3><span class="cnt">${g.members.length}명</span></header>
+      <header><h3>${gi+1}조${editingNick === gi
+        ? `<input class="nick-edit" data-g="${gi}" maxlength="20" value="${esc(g.nick||'')}" aria-label="${gi+1}조 이름" placeholder="조 이름">`
+        : `<button type="button" class="nick${g.nick?'':' empty'}" data-act="nick" data-g="${gi}" title="눌러서 조 이름 고치기" aria-label="${gi+1}조 이름 ${esc(g.nick||'없음')}, 눌러서 고치기">${g.nick ? '(' + esc(g.nick) + ')' : '(이름 붙이기)'}</button>`}</h3><span class="cnt">${g.members.length}명</span></header>
       <div class="leader-line">${g.leader ? '조장 ' + esc(N[g.leader]?.name) : '<em>조장 미지정</em>'}</div>
       <ul>${g.members.length ? orderedMembers(g).map((id,j) => {
         const s = N[id] || {name:id}, L = g.leader === id;
@@ -1034,15 +1064,15 @@ function resultText(){
   const N = result.names;
   const lines = [resultTitle() + ` (${fmtDate(result.at)})`, `편성 번호 ${result.seed} · 총 ${result.groups.reduce((t,g)=>t+g.members.length,0)}명, ${result.groups.length}개 조`, ''];
   result.groups.forEach((g,i) => {
-    lines.push(`${i+1}조 (${g.members.length}명)${g.leader ? ' 조장: ' + N[g.leader].name : ''}`);
+    lines.push(`${teamLabel(g,i)} (${g.members.length}명)${g.leader ? ' 조장: ' + N[g.leader].name : ''}`);
     lines.push('  ' + orderedMembers(g).map(id => (id===g.leader?'★':'') + N[id].name).join(', '));
   });
   return lines.join('\n');
 }
 function resultCSV(){
   const N = result.names, q = v => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g,'""')}"`; };
-  const rows = [['조','역할','학번','이름','성별','특성']];
-  result.groups.forEach((g,i) => orderedMembers(g).forEach(id => rows.push([`${i+1}조`, id===g.leader?'조장':'조원', id, N[id].name, N[id].gender, N[id].tag])));
+  const rows = [['조','조 이름','역할','학번','이름','성별','특성']];
+  result.groups.forEach((g,i) => orderedMembers(g).forEach(id => rows.push([`${i+1}조`, g.nick||'', id===g.leader?'조장':'조원', id, N[id].name, N[id].gender, N[id].tag])));
   return '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n');
 }
 
@@ -1052,7 +1082,7 @@ function saveHistory(){
   const k = result.key;
   if (!db.history[k]) db.history[k] = [];
   const rec = {id: result.histId || Date.now(), at: result.at, subject: result.subject, task: result.task, seed: result.seed,
-    edited: result.edited, names: result.names, groups: result.groups.map(g => ({members:[...g.members], leader:g.leader}))};
+    edited: result.edited, names: result.names, groups: result.groups.map(g => ({members:[...g.members], leader:g.leader, nick:g.nick||''}))};
   const idx = db.history[k].findIndex(h => h.id === rec.id);
   if (idx >= 0) db.history[k][idx] = rec; else db.history[k].push(rec);
   result.histId = rec.id; result.dirty = false;
@@ -1256,7 +1286,7 @@ function openPresent(){
   if (!result) return;
   const N = result.names;
   $('#pTitle').textContent = resultTitle();
-  $('#pGrid').innerHTML = result.groups.map((g,i) => `<div class="pcard" data-i="${i}" style="--h:${groupHue(i)}"><h3>${i+1}조</h3><div class="q">?</div>
+  $('#pGrid').innerHTML = result.groups.map((g,i) => `<div class="pcard" data-i="${i}" style="--h:${groupHue(i)}"><h3>${esc(teamLabel(g,i))}</h3><div class="q">?</div>
     <ul class="names">${orderedMembers(g).map(id => id===g.leader ? `<li class="ld">★ ${esc(N[id].name)} (조장)</li>` : `<li>${esc(N[id].name)}</li>`).join('')}</ul></div>`).join('');
   revealed = 0; $('#present').hidden = false; document.body.style.overflow = 'hidden'; setBackdropInert(true); $('#pNext').focus(); updatePresentBtn();
 }
@@ -1377,10 +1407,38 @@ $('#btnCopy').addEventListener('click', async () => toast(await copyText(resultT
 $('#btnCSV').addEventListener('click', () => download(`조편성_${result.key.replace(/\s/g,'')}_${today()}.csv`, resultCSV(), 'text/csv;charset=utf-8'));
 $('#btnPrint').addEventListener('click', () => window.print());
 $('#btnSaveHist').addEventListener('click', saveHistory);
+// 조 이름 직접 수정: Enter·포커스 이동 = 저장, Esc = 취소
+function finishNick(inp, save){
+  if (editingNick < 0 || !result) return;
+  const gi = +inp.dataset.g, g = result.groups[gi];
+  if (save){
+    const v = inp.value.replace(/\s+/g, ' ').trim().slice(0, 20);
+    if (v !== (g.nick || '')){ g.nick = v; if (result.histId) result.dirty = true; }
+  }
+  editingNick = -1; renderResult();
+  const btn = $('#groups').querySelector(`[data-act=nick][data-g="${gi}"]`); if (btn) btn.focus();
+}
+$('#groups').addEventListener('keydown', e => {
+  const inp = e.target.closest('.nick-edit'); if (!inp) return;
+  if (e.key === 'Enter'){ e.preventDefault(); finishNick(inp, true); }
+  else if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); finishNick(inp, false); }
+});
+$('#groups').addEventListener('focusout', e => { const inp = e.target.closest('.nick-edit'); if (inp && editingNick >= 0) finishNick(inp, true); });
+$('#btnRenameAll').addEventListener('click', () => {
+  if (!result) return;
+  const cur = result.groups.map(g => g.nick).filter(Boolean);
+  const names = pickTeamNames(result.groups.length, Math.random, cur);   // 지금 이름과 겹치지 않게 새로 뽑기
+  result.groups.forEach((g, i) => g.nick = names[i]);
+  if (result.histId) result.dirty = true;
+  editingNick = -1; renderResult(); toast('조 이름을 새로 뽑았습니다. 이름을 눌러 직접 고칠 수도 있습니다.');
+});
 
 const G = $('#groups');
 G.addEventListener('click', e => {
   if (!result) return;
+  if (e.target.closest('.nick-edit')) return;   // 수정 중인 입력칸 클릭은 무시
+  const nb = e.target.closest('[data-act=nick]');
+  if (nb){ editingNick = +nb.dataset.g; sel = null; renderResult(); const inp = G.querySelector('.nick-edit'); if (inp){ inp.focus(); inp.select(); } return; }
   const chip = e.target.closest('.chip'), card = e.target.closest('.group');
   if (e.target.closest('[data-act=leader]') && chip){
     const g = result.groups[groupOf(chip.dataset.id)];
@@ -1414,8 +1472,8 @@ $('#histList').addEventListener('click', e => {
   const k = classKey(), id = +b.dataset.id, h = historyOf(k).find(x => x.id === id); if (!h) return;
   if (b.dataset.act === 'load'){
     result = {key:k, subject:h.subject, task:h.task, seed:h.seed, at:h.at, names:h.names, edited:h.edited, dirty:false, histId:h.id,
-      groups: h.groups.map(g => ({members:[...g.members], leader:g.leader})), warnings:[], checks:null, eval:{}};
-    sel = null; hideBanner(); renderResult(); $('#resultSec').scrollIntoView({behavior:'smooth'});
+      groups: h.groups.map(g => ({members:[...g.members], leader:g.leader, nick:g.nick||''})), warnings:[], checks:null, eval:{}};
+    sel = null; editingNick = -1; hideBanner(); renderResult(); $('#resultSec').scrollIntoView({behavior:'smooth'});
   } else {
     const shown = result && result.histId === id;   // 화면에 떠 있는 결과가 이 이력인지
     if (!confirm(`${fmtDate(h.at)} 편성 이력을 삭제할까요?` + (shown ? '\n화면의 편성 결과도 함께 지워집니다.' : ''))) return;
@@ -1612,6 +1670,8 @@ const FAQ = [
    a:`<p>화면 오른쪽 위 버튼을 쓰세요.</p><ul><li>스피커 버튼: 효과음 켜기/끄기</li><li>해·달 버튼: 라이트/다크 모드 전환</li></ul>`},
   {id:'subject', t:'교과목명·과제명 목록', k:['교과목','과목','과제명','과제이름','드롭다운','목록','추천'],
    a:`<p>교과목명·과제명은 직접 입력하거나 오른쪽 <b>▼</b>를 눌러 전체 목록에서 고를 수 있습니다. 글자를 입력하면 그 글자가 들어간 항목만 보입니다.</p><p>새로 입력한 값은 다음부터 목록 맨 위에 나옵니다.</p>`, go:[['#classSec','반·과제 정보로 이동']]},
+  {id:'teamname', t:'조 이름 붙이기·바꾸기', k:['조이름','조명칭','팀이름','팀명','별명','별칭','생각나조','최고조','조이름바꾸','조이름수정','조이름고치','조이름변경','이름붙이'],
+   a:`<p>편성하면 각 조에 “1조(생각나조)”처럼 재치 있는 이름이 무작위로 붙습니다.</p><ul><li><b>직접 고치기</b>: 결과 카드에서 밑줄 친 조 이름을 누르고 입력 → Enter (취소는 Esc)</li><li><b>새로 뽑기</b>: <b>조 이름 다시 뽑기</b> 버튼 (조 구성은 그대로)</li></ul><p>조 이름은 발표 모드·복사·CSV·인쇄·이력에도 함께 나옵니다. 이미 저장한 결과라면 <b>변경 사항 저장</b>을 눌러 주세요.</p>`},
   {id:'bug', t:'오류가 있어요', k:['오류','에러','버그','안돼','안되','작동','고장','멈춰','이상해','느려','느림','렉걸','버벅'],
    a:`<p>먼저 <b>Ctrl+Shift+R</b>로 새로고침해 보세요. 그래도 안 되면 어떤 화면에서 무엇을 눌렀는지와 화면 캡처를 담당 교수님께 알려 주세요.</p>`}
 ];
