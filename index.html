@@ -268,16 +268,34 @@ footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
 @media (prefers-reduced-motion: reduce){.present-grid .pcard.revealed,.groups.celebrate .group,.groups.celebrate .chip,.done-banner.show,.shuffle-name.tick{animation:none}.toast{transition:none}}
 @media (max-width:560px){.card{padding:16px}header.app h1{font-size:2.1rem}.brand{gap:12px}.brand-logo{width:48px;height:48px}header.app .eyebrow{font-size:.92rem}header.app p{font-size:.9rem}.btn.big{width:100%}}
 @media print{
-  body{background:#fff;color:#000}
+  /* 컬러 인쇄: 브라우저의 '배경 그래픽' 옵션이 꺼져 있어도 배경색을 인쇄 */
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  /* 편성 직후 인쇄해도 등장 애니메이션 중간 상태(흐린 이름)로 찍히지 않게 */
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  /* 화면이 다크 모드여도 인쇄는 라이트 색상으로 (다크 선택자보다 우선하도록 :root 반복) */
+  :root:root:root{
+    --bg:#ffffff; --surface:#ffffff; --surface-2:#f2f4f7; --text:#111827; --muted:#4b5563; --border:#d1d5db;
+    --primary:#2563eb; --primary-soft:#eef3fe; --accent:#b45309; --accent-soft:#fdf1dc; --danger:#dc2626;
+    --male:#1d4ed8; --male-soft:#e3ebfd; --female:#be185d; --female-soft:#fce7f1; color-scheme:light;
+  }
+  body{background:#fff;color:var(--text)}
   header.app,footer.app,.card:not(#resultSec),.class-bar,.no-print,.toast,.present,.shuffle,.done-banner,#confetti{display:none!important}
   #resultSec{border:0;box-shadow:none!important;padding:0;margin:0;background:#fff!important}
-  #resultSec,#resultSec *{color:#000!important}   /* 다크 모드에서 인쇄해도 검은 글자 */
+  #resultSec h2{color:var(--text)}
   .groups{grid-template-columns:repeat(3,1fr)}
-  .group{break-inside:avoid;background:#fff!important;border-color:#999!important}
-  .chip{background:#fff!important;border:0;padding:2px 0}
+  /* 조 카드: 화면(라이트 모드)과 같은 조별 색 */
+  .group{break-inside:avoid;background:hsl(var(--h) 80% 96%)!important;border-color:hsl(var(--h) 50% 78%)!important}
+  .group h3{color:hsl(var(--h) 55% 34%)!important}
+  .group .cnt,.leader-line{color:var(--muted)!important}
+  .group .chip{background:rgba(255,255,255,.9)!important;border:0;padding:3px 6px}
+  .group .chip.is-leader{background:var(--accent-soft)!important}
+  .chip .nm{color:var(--text)!important}
   .star{display:none}
-  .chip.is-leader .nm::before{content:"★ "}
-  .g,.tag,.ev{border:1px solid #999;background:#fff!important;color:#000!important}
+  .chip.is-leader .nm::before{content:"★ ";color:var(--accent)}
+  .g-m{background:var(--male-soft)!important;color:var(--male)!important}
+  .g-f{background:var(--female-soft)!important;color:var(--female)!important}
+  .tag{border-color:var(--border)!important;color:var(--muted)!important}
+  .ev{background:var(--surface-2)!important;color:var(--text)!important}
 }
 </style>
 </head>
