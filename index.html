@@ -1,1 +1,987 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>간호학과 조 편성기</title>
+<meta name="description" content="학년·반별 명단으로 조(팀)를 무작위 편성하고 조장을 선정하는 웹앱. 성별 균형, 이전 조원 중복 회피, 조장 순환, 편성 이력 관리 지원.">
+<style>
+:root{
+  --bg:#f3f7f7; --surface:#ffffff; --surface-2:#edf3f3; --text:#17282c; --muted:#56696e; --border:#d4dfe0;
+  --primary:#0f766e; --primary-ink:#ffffff; --primary-soft:#d5efeb;
+  --accent:#b45309; --accent-soft:#fdebd0; --danger:#b91c1c;
+  --male:#1d4ed8; --male-soft:#dce6fd; --female:#be185d; --female-soft:#fbe1ee;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.05);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e1618; --surface:#152023; --surface-2:#1c2a2e; --text:#e2ebed; --muted:#9bb0b5; --border:#2b3c41;
+    --primary:#2dd4bf; --primary-ink:#04201c; --primary-soft:#123632;
+    --accent:#f5a524; --accent-soft:#3b2b10; --danger:#f87171;
+    --male:#9db9fd; --male-soft:#1b2a4c; --female:#f9a8d4; --female-soft:#451a30;
+    --shadow:none; color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px 56px}
+header.app{padding:28px 0 8px}
+header.app h1{margin:0;font-size:1.6rem;letter-spacing:-.01em}
+header.app h1 span{color:var(--primary)}
+header.app p{margin:4px 0 0;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-top:16px;box-shadow:var(--shadow)}
+.card h2{display:flex;gap:10px;align-items:center;font-size:1.1rem;margin:0 0 14px}
+.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--primary);color:var(--primary-ink);font-size:.85rem;flex:none}
+.grid-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+input[type=text],input[type=number],select,textarea{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-width:0}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+textarea{width:100%;resize:vertical}
+input[type=number]{width:84px}
+.btn{font:inherit;border:1px solid var(--border);background:var(--surface-2);color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.btn:hover{filter:brightness(.97)}
+.btn.primary{background:var(--primary);color:var(--primary-ink);border-color:var(--primary);font-weight:600}
+.btn.big{font-size:1.1rem;padding:12px 30px;font-weight:700}
+.btn.danger{color:var(--danger)}
+.btn.small{padding:4px 10px;font-size:.85rem}
+.btn:disabled{opacity:.55;cursor:default;filter:none}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row.between{justify-content:space-between}
+.muted{color:var(--muted)}
+.help{font-size:.85rem;color:var(--muted);margin:6px 0 0}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--primary-soft);color:var(--primary);font-size:.85rem;font-weight:600;border:1px solid var(--primary)}
+.table-wrap{overflow:auto;max-height:460px;border:1px solid var(--border);border-radius:10px;margin-top:10px}
+table{border-collapse:collapse;width:100%;min-width:660px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+th{position:sticky;top:0;background:var(--surface-2);font-size:.8rem;color:var(--muted);z-index:1;font-weight:600}
+td input[type=text]{width:100%;padding:4px 6px}
+td select{padding:4px 6px}
+td.num,th.num{text-align:center}
+td.empty{text-align:center;color:var(--muted);padding:28px}
+.mono{font-variant-numeric:tabular-nums}
+tr.absent td:not(:first-child){opacity:.4}
+.icon-btn{border:0;background:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:2px 6px;border-radius:6px}
+.icon-btn:hover{color:var(--danger);background:var(--surface-2)}
+.opt-block{border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.opt-block legend{padding:0 6px;font-size:.85rem;color:var(--muted);font-weight:600}
+.opt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.choice{display:flex;gap:8px;align-items:center;padding:3px 0}
+.choice input{accent-color:var(--primary)}
+.preview{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--primary-soft);border:1px dashed var(--primary);font-weight:600}
+details.adv{margin-top:12px}
+details.adv summary{cursor:pointer;font-weight:600;color:var(--muted)}
+.actions-center{display:flex;justify-content:center;margin-top:18px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--muted);font-size:.9rem;margin-bottom:6px}
+.meta strong{color:var(--text)}
+.evals{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.ev{font-size:.8rem;padding:2px 9px;border-radius:99px;background:var(--surface-2);border:1px solid var(--border)}
+.ev.warn{color:var(--danger);border-color:var(--danger)}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
+.group{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--surface);min-height:120px;transition:outline-color .15s}
+.group header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.group h3{margin:0;font-size:1.15rem;color:var(--primary)}
+.group .cnt{font-size:.85rem;color:var(--muted)}
+.leader-line{font-size:.85rem;color:var(--accent);margin-top:2px}
+.leader-line em{color:var(--muted)}
+.group ul{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.chip{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:8px;background:var(--surface-2);cursor:pointer;user-select:none;border:2px solid transparent}
+.chip.is-leader{background:var(--accent-soft)}
+.chip.selected{border-color:var(--primary)}
+.chip .nm{font-weight:600}
+.chip .sid{font-size:.72rem;color:var(--muted)}
+.star{border:0;background:none;color:var(--accent);font-size:1.05rem;cursor:pointer;padding:0 2px;line-height:1}
+.g{font-size:.72rem;padding:1px 6px;border-radius:99px;font-weight:600}
+.g-m{background:var(--male-soft);color:var(--male)}
+.g-f{background:var(--female-soft);color:var(--female)}
+.tag{font-size:.72rem;padding:1px 6px;border-radius:99px;border:1px solid var(--border);color:var(--muted)}
+.selecting .group{outline:2px dashed transparent;outline-offset:2px}
+.selecting .group:hover,.group.drop-target{outline:2px dashed var(--primary)}
+.empty-group{color:var(--muted);font-size:.85rem;padding:6px}
+.hist{list-style:none;padding:0;margin:0}
+.hist li{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border)}
+.hist li:last-child{border-bottom:0}
+footer.app{margin-top:16px;color:var(--muted);font-size:.85rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+/* 발표 모드 */
+.present{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;gap:16px;padding:16px;overflow:auto}
+.present[hidden]{display:none}
+.present-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.present-title{font-size:clamp(1.1rem,2vw,1.6rem);font-weight:700}
+.present-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.pcard{border:2px solid var(--border);border-radius:16px;background:var(--surface);padding:16px;min-height:190px;display:flex;flex-direction:column}
+.pcard h3{margin:0 0 8px;color:var(--primary);font-size:clamp(1.3rem,2.2vw,2rem)}
+.pcard .q{flex:1;display:grid;place-items:center;font-size:3.5rem;color:var(--muted);font-weight:800}
+.pcard .names{display:none;list-style:none;margin:0;padding:0;font-size:clamp(1.1rem,1.7vw,1.5rem);line-height:1.6}
+.pcard.revealed{border-color:var(--primary);animation:pop .5s ease}
+.pcard.revealed .q{display:none}
+.pcard.revealed .names{display:block}
+.pcard .ld{color:var(--accent);font-weight:700}
+@keyframes pop{0%{transform:scale(.8) rotateY(80deg);opacity:0}100%{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.pcard.revealed{animation:none}.toast{transition:none}}
+@media (max-width:560px){.card{padding:16px}header.app h1{font-size:1.35rem}.btn.big{width:100%}}
+@media print{
+  body{background:#fff;color:#000}
+  header.app,footer.app,.card:not(#resultSec),.no-print,.toast,.present{display:none!important}
+  #resultSec{border:0;box-shadow:none;padding:0;margin:0;background:#fff}
+  .groups{grid-template-columns:repeat(3,1fr)}
+  .group{break-inside:avoid;background:#fff;border-color:#999}
+  .chip{background:#fff!important;border:0;padding:2px 0}
+  .star{display:none}
+  .chip.is-leader .nm::before{content:"★ "}
+  .g,.tag,.ev{border:1px solid #999;background:#fff!important;color:#000!important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <h1>간호학과 <span>조 편성기</span></h1>
+    <p>학년·반을 고르고 명단을 넣으면 공정한 무작위 방식으로 조(팀)를 편성하고 조장을 정합니다.</p>
+  </header>
 
+  <!-- 1. 학급·과제 정보 -->
+  <section class="card" id="classSec">
+    <h2><span class="step">1</span>학급·과제 정보</h2>
+    <div class="grid-form">
+      <label class="field">학년
+        <select id="grade">
+          <option value="1">1학년</option><option value="2">2학년</option>
+          <option value="3">3학년</option><option value="4">4학년</option>
+        </select>
+      </label>
+      <label class="field">반
+        <input type="text" id="cls" value="A" maxlength="12" placeholder="예: A, 1, 가">
+      </label>
+      <label class="field">교과목명
+        <input type="text" id="subject" maxlength="60" placeholder="예: AI융합 간호정보학">
+      </label>
+      <label class="field">과제명
+        <input type="text" id="task" maxlength="60" placeholder="예: 1차 팀 프로젝트">
+      </label>
+    </div>
+    <p class="help">현재 학급: <span class="badge" id="classBadge"></span> <span id="classInfo"></span></p>
+  </section>
+
+  <!-- 2. 학생 명단 -->
+  <section class="card" id="rosterSec">
+    <h2><span class="step">2</span>학생 명단</h2>
+    <textarea id="paste" rows="5" placeholder="엑셀·구글 시트에서 복사해 붙여넣거나 직접 입력하세요. (한 줄에 한 명)
+학번	이름	성별	특성	조장희망
+20260101	김민지	여	편입	O
+20260102	이현우	남"></textarea>
+    <p class="help">열 순서: <b>학번, 이름, 성별, 특성(선택), 조장희망(선택: O/예)</b>. 첫 줄에 제목 행이 있으면 열 이름으로 자동 인식합니다. 이름만 한 줄씩 넣어도 됩니다.</p>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="btnAdd">명단에 추가</button>
+      <button class="btn" id="btnReplace">명단 바꾸기</button>
+      <label class="btn" for="csvFile">CSV 파일 불러오기</label>
+      <input type="file" id="csvFile" accept=".csv,.tsv,.txt,text/csv" hidden>
+      <button class="btn" id="btnSample">예시 명단 넣기</button>
+    </div>
+
+    <div class="row between" style="margin-top:16px">
+      <div><strong id="rosterCount">출석 0명 / 전체 0명</strong> <span class="muted" id="genderCount"></span></div>
+      <div class="row">
+        <button class="btn small" id="btnAllPresent">전체 출석</button>
+        <button class="btn small danger" id="btnClearRoster">명단 비우기</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th class="num">출석</th><th>학번</th><th>이름</th><th>성별</th><th>특성</th><th class="num">조장 희망</th><th class="num">조장 횟수</th><th></th>
+        </tr></thead>
+        <tbody id="rosterBody"></tbody>
+        <tfoot><tr>
+          <td></td>
+          <td><input type="text" id="newId" placeholder="학번" aria-label="새 학생 학번"></td>
+          <td><input type="text" id="newName" placeholder="이름" aria-label="새 학생 이름"></td>
+          <td><select id="newGender" aria-label="새 학생 성별"><option value="">-</option><option>남</option><option>여</option></select></td>
+          <td><input type="text" id="newTag" placeholder="특성" aria-label="새 학생 특성"></td>
+          <td colspan="3"><button class="btn small primary" id="btnAddOne">+ 학생 추가</button></td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <p class="help">출석 체크를 해제한 학생은 이번 편성에서 제외됩니다. 이름·성별·특성은 표에서 바로 고칠 수 있습니다.</p>
+  </section>
+
+  <!-- 3. 편성 옵션 -->
+  <section class="card" id="optSec">
+    <h2><span class="step">3</span>편성 옵션</h2>
+    <div class="opt-grid">
+      <fieldset class="opt-block">
+        <legend>조 구성 방식</legend>
+        <label class="choice"><input type="radio" name="mode" value="size" checked> 조당 인원 <input type="number" id="size" min="2" max="30" value="5" aria-label="조당 인원">명</label>
+        <label class="choice"><input type="radio" name="mode" value="count"> 조 개수 <input type="number" id="count" min="1" max="50" value="8" aria-label="조 개수">개</label>
+        <div id="remBox" style="margin-top:6px">
+          <div class="muted" style="font-size:.85rem">남는 인원 처리</div>
+          <label class="choice"><input type="radio" name="rem" value="up" checked> 조 수 늘리기 (조 간 인원 차 최대 1명, 권장)</label>
+          <label class="choice"><input type="radio" name="rem" value="down"> 조 수 줄이기 (일부 조 인원 증가)</label>
+        </div>
+      </fieldset>
+      <fieldset class="opt-block">
+        <legend>조장 선정</legend>
+        <select id="leader" style="width:100%">
+          <option value="random">무작위</option>
+          <option value="volunteer">희망자 우선 (없으면 무작위)</option>
+          <option value="rotation">순환 (조장 경험 적은 학생 우선)</option>
+          <option value="id">학번 빠른 순</option>
+          <option value="none">지정 안 함</option>
+        </select>
+        <p class="help">‘순환’은 저장된 편성 이력의 조장 횟수를 기준으로 합니다. 같은 횟수면 희망자를 우선합니다.</p>
+      </fieldset>
+      <fieldset class="opt-block">
+        <legend>균형 조건</legend>
+        <label class="choice"><input type="checkbox" id="optGender" checked> 성별 균형 (남·여를 조마다 고르게)</label>
+        <label class="choice"><input type="checkbox" id="optTag"> 특성 분산 (편입·재수강 등 고르게)</label>
+        <label class="choice"><input type="checkbox" id="optAvoid" checked> 이전 조원과 중복 피하기</label>
+        <p class="help">조건이 많을수록 결과의 무작위성은 줄어듭니다. 필요한 조건만 켜세요.</p>
+      </fieldset>
+    </div>
+    <div class="preview" id="preview">출석 0명</div>
+
+    <details class="adv">
+      <summary>고급 조건 (분리·고정·편성 번호)</summary>
+      <div class="opt-grid" style="margin-top:10px">
+        <label class="field">서로 다른 조에 배치할 학생 (한 줄에 한 묶음, 쉼표로 구분)
+          <textarea id="sepText" rows="3" placeholder="김민지, 이현우&#10;20260105, 20260111, 20260120"></textarea>
+        </label>
+        <label class="field">특정 조에 고정할 학생 (학번 또는 이름 = 조 번호)
+          <textarea id="fixedText" rows="3" placeholder="박서연 = 1&#10;20260107 = 3"></textarea>
+        </label>
+        <label class="field">편성 번호 (같은 번호·명단·옵션이면 같은 결과)
+          <input type="text" id="seedInput" placeholder="비워 두면 새로 생성" maxlength="20">
+        </label>
+      </div>
+    </details>
+
+    <div class="actions-center"><button class="btn primary big" id="btnRun">🎲 조 편성하기</button></div>
+  </section>
+
+  <!-- 4. 결과 -->
+  <section class="card" id="resultSec" hidden>
+    <h2><span class="step">4</span>편성 결과</h2>
+    <div class="meta" id="resultMeta"></div>
+    <div class="evals" id="resultEvals"></div>
+    <div class="row no-print">
+      <button class="btn" id="btnReshuffle">🔀 다시 섞기</button>
+      <button class="btn" id="btnPresent">📺 발표 모드</button>
+      <button class="btn" id="btnCopy">📋 텍스트 복사</button>
+      <button class="btn" id="btnCSV">⬇ CSV 저장</button>
+      <button class="btn" id="btnPrint">🖨 인쇄</button>
+      <button class="btn primary" id="btnSaveHist">💾 이력에 저장</button>
+    </div>
+    <p class="help no-print">학생을 눌러 선택한 뒤 <b>다른 조의 학생</b>을 누르면 서로 자리를 바꾸고, <b>다른 조의 빈 곳</b>을 누르면 그 조로 옮깁니다(PC에서는 끌어다 놓기도 가능). ☆를 누르면 조장으로 지정됩니다.</p>
+    <div class="groups" id="groups"></div>
+  </section>
+
+  <!-- 5. 이력 -->
+  <section class="card" id="histSec">
+    <h2><span class="step">5</span>편성 이력 <span class="muted" style="font-weight:400;font-size:.9rem" id="histSummary"></span></h2>
+    <ul class="hist" id="histList"></ul>
+    <p class="help">저장된 이력은 ‘이전 조원과 중복 피하기’와 ‘조장 순환’에 사용됩니다.</p>
+  </section>
+
+  <footer class="app">
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn small" id="btnBackup">전체 데이터 백업 (JSON)</button>
+      <label class="btn small" for="restoreFile">백업 복원</label>
+      <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+      <button class="btn small danger" id="btnDeleteClass">이 학급 데이터 삭제</button>
+    </div>
+    <p>🔒 명단과 이력은 이 브라우저에만 저장되며 어떤 서버로도 전송되지 않습니다. 다른 PC에서 쓰려면 백업 파일을 옮겨 복원하세요. 공용 PC에서는 사용 후 ‘이 학급 데이터 삭제’를 권장합니다.</p>
+    <p>무작위 방식: 브라우저 암호학적 난수(crypto.getRandomValues)로 편성 번호를 만들고, 그 번호를 시드로 한 Fisher–Yates 셔플로 섞습니다.</p>
+  </footer>
+</div>
+
+<div id="present" class="present" hidden role="dialog" aria-modal="true" aria-label="발표 모드">
+  <div class="present-bar">
+    <div class="present-title" id="pTitle"></div>
+    <div class="row">
+      <button class="btn primary" id="pNext">다음 조 공개 (Space)</button>
+      <button class="btn" id="pAll">모두 공개</button>
+      <button class="btn" id="pClose">닫기 (Esc)</button>
+    </div>
+  </div>
+  <div class="present-grid" id="pGrid"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ===================== 저장소 ===================== */
+const KEY = 'nursing-group-formation:v1';
+let storageOK = true;
+function loadDB(){
+  try{
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && d.rosters) return Object.assign({rosters:{}, history:{}, settings:{}}, d);
+  }catch(e){}
+  return {rosters:{}, history:{}, settings:{}};
+}
+let db = loadDB();
+function saveDB(){
+  try{ localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch(e){ if (storageOK){ storageOK = false; toast('이 브라우저에서는 저장할 수 없습니다. 백업 다운로드를 이용하세요.'); } }
+}
+
+/* ===================== 유틸 ===================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cmpId = (a, b) => String(a.id).localeCompare(String(b.id), 'ko', {numeric:true});
+const pairKey = (a, b) => a < b ? a + '\u0001' + b : b + '\u0001' + a;
+const pad = (n, w) => String(n).padStart(w, '0');
+function fmtDate(iso){
+  const d = new Date(iso);
+  return `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}. ${pad(d.getHours(),2)}:${pad(d.getMinutes(),2)}`;
+}
+let toastTimer;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function download(name, text, type){
+  const blob = new Blob([text], {type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    let ok = false; try{ ok = document.execCommand('copy'); }catch(_){}
+    ta.remove(); return ok;
+  }
+}
+const today = () => { const d = new Date(); return `${d.getFullYear()}${pad(d.getMonth()+1,2)}${pad(d.getDate(),2)}`; };
+
+/* ===================== 난수 (시드 기반) ===================== */
+function cyrb128(str){
+  let h1=1779033703,h2=3144134277,h3=1013904242,h4=2773480762;
+  for (let i=0,k;i<str.length;i++){
+    k=str.charCodeAt(i);
+    h1=h2^Math.imul(h1^k,597399067); h2=h3^Math.imul(h2^k,2869860233);
+    h3=h4^Math.imul(h3^k,951274213); h4=h1^Math.imul(h4^k,2716044179);
+  }
+  h1=Math.imul(h3^(h1>>>18),597399067); h2=Math.imul(h4^(h2>>>22),2869860233);
+  h3=Math.imul(h1^(h3>>>17),951274213); h4=Math.imul(h2^(h4>>>19),2716044179);
+  h1^=(h2^h3^h4); h2^=h1; h3^=h1; h4^=h1;
+  return [h1>>>0,h2>>>0,h3>>>0,h4>>>0];
+}
+function sfc32(a,b,c,d){
+  return function(){
+    a|=0;b|=0;c|=0;d|=0;
+    const t=(((a+b)|0)+d)|0; d=(d+1)|0;
+    a=b^(b>>>9); b=(c+(c<<3))|0; c=(c<<21)|(c>>>11); c=(c+t)|0;
+    return (t>>>0)/4294967296;
+  };
+}
+function makeRng(seed){ const r = sfc32(...cyrb128('gf:' + seed)); for (let i=0;i<15;i++) r(); return r; }
+function newSeed(){ const a = new Uint32Array(1); crypto.getRandomValues(a); return String(100000 + a[0] % 900000); }
+function shuffle(arr, rng){ // Fisher–Yates
+  const a = arr.slice();
+  for (let i=a.length-1;i>0;i--){ const j=Math.floor(rng()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+const pick = (arr, rng) => arr[Math.floor(rng()*arr.length)];
+
+/* ===================== 학급·명단 ===================== */
+function classKey(){
+  const c = $('#cls').value.trim().replace(/반$/, '') || 'A';
+  return `${$('#grade').value}학년 ${c}반`;
+}
+function roster(){
+  const k = classKey();
+  if (!db.rosters[k]) db.rosters[k] = {students:[], sep:'', fixed:''};
+  return db.rosters[k];
+}
+function historyOf(k = classKey()){ return db.history[k] || []; }
+function leaderCounts(k = classKey()){
+  const m = new Map();
+  for (const rec of historyOf(k)) for (const g of rec.groups) if (g.leader) m.set(g.leader, (m.get(g.leader)||0)+1);
+  return m;
+}
+function normGender(v){
+  const s = String(v||'').trim().toLowerCase();
+  if (/^(남|남자|남성|m|male|man)$/.test(s)) return '남';
+  if (/^(여|여자|여성|f|female|woman)$/.test(s)) return '여';
+  return null;
+}
+const isYes = v => /^(o|y|yes|예|네|희망|v|✓|✔|1|true|조장)$/i.test(String(v||'').trim());
+
+function splitLine(line){
+  if (line.includes('\t')) return line.split('\t').map(s=>s.trim());
+  const out=[]; let cur='', q=false;
+  for (let i=0;i<line.length;i++){
+    const ch=line[i];
+    if (q){ if (ch==='"'){ if (line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else if (ch==='"') q=true;
+    else if (ch===','){ out.push(cur); cur=''; }
+    else cur+=ch;
+  }
+  out.push(cur);
+  return out.map(s=>s.trim());
+}
+function parseRoster(text){
+  const lines = text.replace(/^﻿/, '').split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  let rows = lines.map(splitLine).filter(r => r.some(c => c));
+  if (!rows.length) return [];
+  const H = {
+    id:/^(학번|번호|id|student\s*id|no\.?)$/i, name:/^(이름|성명|name)$/i,
+    gender:/^(성별|gender|sex)$/i, tag:/^(특성|비고|구분|태그|tag|note)$/i,
+    vol:/^(조장\s*희망|조장|희망|leader|volunteer)$/i
+  };
+  let map = null;
+  if (rows[0].some(c => H.name.test(c))){
+    map = {};
+    rows[0].forEach((c,i) => { for (const k in H) if (map[k]==null && H[k].test(c)) { map[k]=i; break; } });
+    rows = rows.slice(1);
+  }
+  return rows.map(r => {
+    const s = {id:'', name:'', gender:'', tag:'', volunteer:false, present:true};
+    if (map){
+      s.id = map.id!=null ? (r[map.id]||'') : '';
+      s.name = map.name!=null ? (r[map.name]||'') : '';
+      s.gender = normGender(map.gender!=null ? r[map.gender] : '') || '';
+      s.tag = map.tag!=null ? (r[map.tag]||'') : '';
+      s.volunteer = map.vol!=null ? isYes(r[map.vol]) : false;
+    } else {
+      const cells = r.slice();
+      if (cells.length > 1 && /^[A-Za-z]?\d[\d-]*$/.test(cells[0])) s.id = cells.shift();
+      s.name = cells.shift() || '';
+      for (const c of cells){
+        if (!c) continue;
+        const g = normGender(c);
+        if (g && !s.gender){ s.gender = g; continue; }
+        if (isYes(c) && !s.volunteer){ s.volunteer = true; continue; }
+        if (!s.tag) s.tag = c;
+      }
+    }
+    return s;
+  }).filter(s => s.name);
+}
+function ensureIds(list){
+  const used = new Set();
+  let n = 1;
+  for (const s of list){
+    let id = String(s.id||'').trim();
+    if (!id){ do { id = 'N' + pad(n++, 2); } while (used.has(id) || list.some(o => o !== s && o.id === id)); }
+    let base = id, k = 2;
+    while (used.has(id)) id = `${base}-${k++}`;
+    s.id = id; used.add(id);
+  }
+  return list;
+}
+function addStudents(parsed, replace){
+  const r = roster();
+  if (replace){ r.students = ensureIds(parsed); }
+  else {
+    const byId = new Map(r.students.map(s => [s.id, s]));
+    for (const p of parsed){
+      if (p.id && byId.has(p.id)) Object.assign(byId.get(p.id), p);
+      else r.students.push(p);
+    }
+    ensureIds(r.students);
+  }
+  saveDB(); renderRoster();
+}
+
+/* ===================== 렌더: 명단 ===================== */
+function renderRoster(){
+  const list = roster().students, lc = leaderCounts();
+  const tb = $('#rosterBody');
+  if (!list.length){
+    tb.innerHTML = `<tr><td colspan="8" class="empty">아직 명단이 없습니다. 위에 붙여넣거나 CSV를 불러오세요.</td></tr>`;
+  } else {
+    tb.innerHTML = list.map((s,i) => `<tr data-i="${i}" class="${s.present===false?'absent':''}">
+      <td class="num"><input type="checkbox" data-f="present" ${s.present!==false?'checked':''} aria-label="${esc(s.name)} 출석"></td>
+      <td class="mono">${esc(s.id)}</td>
+      <td><input type="text" data-f="name" value="${esc(s.name)}" aria-label="이름"></td>
+      <td><select data-f="gender" aria-label="성별"><option value="">-</option><option ${s.gender==='남'?'selected':''}>남</option><option ${s.gender==='여'?'selected':''}>여</option></select></td>
+      <td><input type="text" data-f="tag" value="${esc(s.tag||'')}" placeholder="예: 편입" aria-label="특성"></td>
+      <td class="num"><input type="checkbox" data-f="volunteer" ${s.volunteer?'checked':''} aria-label="${esc(s.name)} 조장 희망"></td>
+      <td class="num">${lc.get(s.id)||0}</td>
+      <td><button class="icon-btn" data-act="del" title="삭제" aria-label="${esc(s.name)} 삭제">✕</button></td>
+    </tr>`).join('');
+  }
+  updateCounts();
+}
+function updateCounts(){
+  const list = roster().students;
+  const p = list.filter(s => s.present!==false);
+  $('#rosterCount').textContent = `출석 ${p.length}명 / 전체 ${list.length}명`;
+  const m = p.filter(s=>s.gender==='남').length, f = p.filter(s=>s.gender==='여').length, u = p.length-m-f;
+  $('#genderCount').textContent = p.length ? `(남 ${m} · 여 ${f}${u?` · 미입력 ${u}`:''})` : '';
+  updatePreview(); updateClassInfo();
+}
+function updateClassInfo(){
+  $('#classBadge').textContent = classKey();
+  const r = db.rosters[classKey()], h = historyOf();
+  $('#classInfo').textContent = ` · 저장된 명단 ${r ? r.students.length : 0}명 · 편성 이력 ${h.length}회`;
+}
+
+/* ===================== 옵션 ===================== */
+function readOpts(){
+  return {
+    mode: document.querySelector('input[name=mode]:checked').value,
+    size: Math.max(2, parseInt($('#size').value,10) || 5),
+    count: Math.max(1, parseInt($('#count').value,10) || 1),
+    rem: document.querySelector('input[name=rem]:checked').value,
+    leader: $('#leader').value,
+    gender: $('#optGender').checked, tag: $('#optTag').checked, avoid: $('#optAvoid').checked
+  };
+}
+function groupSizes(n, o){
+  if (n <= 0) return [];
+  let g;
+  if (o.mode === 'size') g = o.rem === 'up' ? Math.ceil(n/o.size) : Math.max(1, Math.floor(n/o.size));
+  else g = o.count;
+  g = Math.max(1, Math.min(g, n));
+  const base = Math.floor(n/g), extra = n % g;
+  return Array.from({length:g}, (_,i) => base + (i < extra ? 1 : 0));
+}
+function describeSizes(sizes){
+  const c = new Map(); sizes.forEach(s => c.set(s, (c.get(s)||0)+1));
+  return [...c.entries()].sort((a,b)=>b[0]-a[0]).map(([s,k]) => `${s}명 × ${k}개`).join(', ');
+}
+function updatePreview(){
+  const o = readOpts();
+  $('#remBox').style.display = o.mode === 'size' ? '' : 'none';
+  const n = roster().students.filter(s=>s.present!==false).length;
+  const sizes = groupSizes(n, o);
+  $('#preview').textContent = n < 2 ? `출석 ${n}명 — 편성하려면 2명 이상 필요합니다.`
+    : `출석 ${n}명 → ${sizes.length}개 조 (${describeSizes(sizes)})`;
+}
+const SETTING_IDS = ['grade','cls','subject','task','size','count','leader','optGender','optTag','optAvoid'];
+function saveSettings(){
+  const s = {};
+  for (const id of SETTING_IDS){ const el = $('#'+id); s[id] = el.type === 'checkbox' ? el.checked : el.value; }
+  s.mode = document.querySelector('input[name=mode]:checked').value;
+  s.rem = document.querySelector('input[name=rem]:checked').value;
+  db.settings = s; saveDB();
+}
+function loadSettings(){
+  const s = db.settings || {};
+  for (const id of SETTING_IDS){ if (s[id] == null) continue; const el = $('#'+id); if (el.type === 'checkbox') el.checked = s[id]; else el.value = s[id]; }
+  if (s.mode) document.querySelector(`input[name=mode][value=${s.mode}]`).checked = true;
+  if (s.rem) document.querySelector(`input[name=rem][value=${s.rem}]`).checked = true;
+}
+
+/* ===================== 편성 알고리즘 ===================== */
+function resolveToken(tok, present){
+  tok = tok.trim(); if (!tok) return null;
+  const byId = present.find(s => s.id === tok); if (byId) return byId.id;
+  const byName = present.filter(s => s.name === tok);
+  return byName.length === 1 ? byName[0].id : (byName.length > 1 ? 'AMBIG' : null);
+}
+function buildCtx(key, present, nGroups){
+  const pc = new Map(), warnings = [];
+  for (const rec of historyOf(key)) for (const g of rec.groups){
+    const m = g.members;
+    for (let i=0;i<m.length;i++) for (let j=i+1;j<m.length;j++){ const k = pairKey(m[i],m[j]); pc.set(k, (pc.get(k)||0)+1); }
+  }
+  const r = roster(), sep = new Set(), fixed = new Map();
+  const absentNames = new Set(r.students.filter(s=>s.present===false).flatMap(s=>[s.id,s.name]));
+  const note = tok => { if (!absentNames.has(tok.trim())) warnings.push(`인식 못한 학생: ${tok.trim()}`); };
+  for (const line of (r.sep||'').split(/\r?\n/)){
+    const ids = [];
+    for (const t of line.split(/[,，、]/)){ if (!t.trim()) continue; const id = resolveToken(t, present);
+      if (id === 'AMBIG') warnings.push(`동명이인(학번으로 입력): ${t.trim()}`); else if (id) ids.push(id); else note(t); }
+    for (let i=0;i<ids.length;i++) for (let j=i+1;j<ids.length;j++) sep.add(pairKey(ids[i],ids[j]));
+  }
+  for (const line of (r.fixed||'').split(/\r?\n/)){
+    if (!line.trim()) continue;
+    const m = line.match(/^(.+?)\s*[=:]\s*(\d+)\s*조?\s*$/);
+    if (!m){ warnings.push(`고정 조건 형식 오류: ${line.trim()}`); continue; }
+    const id = resolveToken(m[1], present), gi = parseInt(m[2],10) - 1;
+    if (id === 'AMBIG'){ warnings.push(`동명이인(학번으로 입력): ${m[1].trim()}`); continue; }
+    if (!id){ note(m[1]); continue; }
+    if (gi < 0 || gi >= nGroups){ warnings.push(`조 번호 범위 밖: ${line.trim()}`); continue; }
+    fixed.set(id, gi);
+  }
+  return {
+    pc: (a,b) => pc.get(pairKey(a,b)) || 0,
+    isSep: (a,b) => sep.has(pairKey(a,b)),
+    hasSep: sep.size > 0, hasHistory: pc.size > 0,
+    fixed, warnings, leaderCount: (() => { const lc = leaderCounts(key); return id => lc.get(id)||0; })()
+  };
+}
+function lexLess(a, b){ for (let i=0;i<a.length;i++){ if (a[i] < b[i]) return true; if (a[i] > b[i]) return false; } return false; }
+function assign(students, sizes, o, rng, ctx){
+  const g = sizes.length, groups = sizes.map(() => []);
+  const stratKey = s => (o.gender ? (s.gender||'?') : '') + '|' + (o.tag ? (s.tag||'') : '');
+  const similarity = (s, m) => (o.gender && s.gender && s.gender === m.gender ? 1 : 0) + (o.tag && s.tag && s.tag === m.tag ? 1 : 0);
+  const rest = [];
+  for (const s of students){ const fi = ctx.fixed.get(s.id); if (fi != null) groups[fi].push(s); else rest.push(s); }
+  const strata = new Map();
+  for (const s of rest){ const k = stratKey(s); if (!strata.has(k)) strata.set(k, []); strata.get(k).push(s); }
+  // 적은 집단(예: 남학생)부터 배치해야 고르게 퍼진다
+  const order = shuffle([...strata.values()], rng).sort((a,b) => a.length - b.length).map(a => shuffle(a, rng));
+  for (const arr of order) for (const s of arr){
+    let best = -1, bestScore = null;
+    for (let i=0;i<g;i++){
+      if (groups[i].length >= sizes[i]) continue;
+      let sep=0, same=0, rep=0;
+      for (const m of groups[i]){ if (ctx.isSep(s.id,m.id)) sep++; same += similarity(s,m); if (o.avoid) rep += ctx.pc(s.id,m.id); }
+      const score = [sep, same, rep, groups[i].length / sizes[i], rng()];
+      if (!bestScore || lexLess(score, bestScore)){ best = i; bestScore = score; }
+    }
+    if (best < 0){ best = 0; for (let i=1;i<g;i++) if (groups[i].length < groups[best].length) best = i; }
+    groups[best].push(s);
+  }
+  return groups;
+}
+function evaluate(groups, ctx, o){
+  let sep=0, rep=0, imb=0;
+  for (const g of groups) for (let i=0;i<g.length;i++) for (let j=i+1;j<g.length;j++){
+    if (ctx.isSep(g[i].id,g[j].id)) sep++;
+    rep += ctx.pc(g[i].id,g[j].id);
+  }
+  const spread = vals => { for (const v of vals){ const c = groups.map(g => g.filter(v.test).length); imb += Math.max(...c) - Math.min(...c); } };
+  if (o.gender) spread([{test:s=>s.gender==='남'},{test:s=>s.gender==='여'}]);
+  if (o.tag){ const tags = new Set(groups.flat().map(s=>s.tag).filter(Boolean)); spread([...tags].map(t => ({test:s=>s.tag===t}))); }
+  return {score: sep*1e6 + imb*1e3 + (o.avoid ? rep : 0), sep, rep, imb};
+}
+function pickLeaders(groups, method, rng, ctx){
+  return groups.map(gr => {
+    if (!gr.length || method === 'none') return null;
+    if (method === 'id') return [...gr].sort(cmpId)[0].id;
+    if (method === 'volunteer'){ const v = gr.filter(s=>s.volunteer); return pick(v.length ? v : gr, rng).id; }
+    if (method === 'rotation'){
+      const min = Math.min(...gr.map(s => ctx.leaderCount(s.id)));
+      let c = gr.filter(s => ctx.leaderCount(s.id) === min);
+      const v = c.filter(s=>s.volunteer); if (v.length) c = v;
+      return pick(c, rng).id;
+    }
+    return pick(gr, rng).id;
+  });
+}
+
+/* ===================== 실행 ===================== */
+let result = null, sel = null;
+function runFormation(forceNewSeed){
+  const key = classKey(), o = readOpts();
+  const present = roster().students.filter(s => s.present!==false).slice().sort(cmpId);
+  if (present.length < 2){ toast('출석한 학생이 2명 이상이어야 합니다.'); return; }
+  const sizes = groupSizes(present.length, o);
+  let seed = forceNewSeed ? '' : $('#seedInput').value.trim();
+  if (!seed) seed = newSeed();
+  const rng = makeRng(seed);
+  const ctx = buildCtx(key, present, sizes.length);
+  const trials = (ctx.hasSep || (o.avoid && ctx.hasHistory)) ? 400 : (o.gender || o.tag ? 60 : 1);
+  let best = null;
+  for (let t=0;t<trials;t++){
+    const gs = assign(present, sizes, o, rng, ctx), ev = evaluate(gs, ctx, o);
+    if (!best || ev.score < best.ev.score) best = {gs, ev};
+    if (ev.score === 0) break;
+  }
+  const leaders = pickLeaders(best.gs, o.leader, rng, ctx);
+  const names = {};
+  for (const s of present) names[s.id] = {name:s.name, gender:s.gender||'', tag:s.tag||''};
+  result = {
+    key, subject: $('#subject').value.trim(), task: $('#task').value.trim(), seed, at: new Date().toISOString(),
+    opts: o, eval: best.ev, warnings: ctx.warnings, names, edited:false, dirty:true, histId:null,
+    groups: best.gs.map((g,i) => ({members: g.map(s=>s.id), leader: leaders[i]})),
+    checks: {gender:o.gender, tag:o.tag, avoid:o.avoid, hasSep:ctx.hasSep, hasHistory:ctx.hasHistory}
+  };
+  sel = null;
+  renderResult();
+  $('#resultSec').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ===================== 렌더: 결과 ===================== */
+function orderedMembers(g){
+  const N = result.names;
+  return [...g.members].sort((a,b) => (b===g.leader) - (a===g.leader) || String(N[a]?.name).localeCompare(String(N[b]?.name), 'ko'));
+}
+function renderResult(){
+  const sec = $('#resultSec');
+  if (!result){ sec.hidden = true; return; }
+  sec.hidden = false;
+  const N = result.names, total = result.groups.reduce((t,g)=>t+g.members.length,0);
+  $('#resultMeta').innerHTML = `<span><strong>${esc(result.key)}</strong></span>
+    <span>${esc(result.subject || '과목 미입력')}${result.task ? ' · ' + esc(result.task) : ''}</span>
+    <span>${fmtDate(result.at)}</span>
+    <span>편성 번호 <strong>${esc(result.seed)}</strong>${result.edited ? ' (수동 조정됨)' : ''}</span>
+    <span>총 ${total}명 · ${result.groups.length}개 조</span>`;
+  const ev = [];
+  if (result.checks){
+    const c = result.checks, e = result.eval;
+    if (c.hasSep) ev.push(e.sep ? `<span class="ev warn">분리 조건 위반 ${e.sep}건</span>` : `<span class="ev">분리 조건 충족 ✓</span>`);
+    if (c.gender) ev.push(`<span class="ev">성별 균형 ✓</span>`);
+    if (c.tag) ev.push(`<span class="ev">특성 분산 ✓</span>`);
+    if (c.avoid) ev.push(c.hasHistory ? `<span class="ev">이전 조원 재회 ${e.rep}쌍</span>` : `<span class="ev">이전 이력 없음</span>`);
+  }
+  for (const w of (result.warnings||[])) ev.push(`<span class="ev warn">${esc(w)}</span>`);
+  $('#resultEvals').innerHTML = ev.join('');
+  const nameCount = new Map(); Object.values(N).forEach(s => nameCount.set(s.name, (nameCount.get(s.name)||0)+1));
+  $('#groups').classList.toggle('selecting', !!sel);
+  $('#groups').innerHTML = result.groups.map((g,gi) => `<article class="group" data-g="${gi}">
+      <header><h3>${gi+1}조</h3><span class="cnt">${g.members.length}명</span></header>
+      <div class="leader-line">${g.leader ? '조장 ' + esc(N[g.leader]?.name) : '<em>조장 미지정</em>'}</div>
+      <ul>${g.members.length ? orderedMembers(g).map(id => {
+        const s = N[id] || {name:id}, L = g.leader === id;
+        return `<li class="chip${L?' is-leader':''}${sel===id?' selected':''}" draggable="true" data-id="${esc(id)}">
+          <button class="star" data-act="leader" title="${L?'조장 해제':'조장으로 지정'}" aria-label="${esc(s.name)} ${L?'조장 해제':'조장으로 지정'}">${L?'★':'☆'}</button>
+          <span class="nm">${esc(s.name)}</span>${nameCount.get(s.name)>1?`<span class="sid">${esc(id)}</span>`:''}
+          ${s.gender?`<span class="g g-${s.gender==='남'?'m':'f'}">${s.gender}</span>`:''}${s.tag?`<span class="tag">${esc(s.tag)}</span>`:''}
+        </li>`; }).join('') : '<li class="empty-group">(비어 있음)</li>'}</ul>
+    </article>`).join('');
+  const btn = $('#btnSaveHist');
+  if (!result.histId){ btn.textContent = '💾 이력에 저장'; btn.disabled = false; }
+  else if (result.dirty){ btn.textContent = '💾 변경 사항 저장'; btn.disabled = false; }
+  else { btn.textContent = '✓ 이력에 저장됨'; btn.disabled = true; }
+}
+const groupOf = id => result.groups.findIndex(g => g.members.includes(id));
+function markEdited(){ result.edited = true; result.dirty = true; }
+function swap(a, b){
+  const ga = result.groups[groupOf(a)], gb = result.groups[groupOf(b)];
+  if (ga === gb) return;
+  ga.members[ga.members.indexOf(a)] = b; gb.members[gb.members.indexOf(b)] = a;
+  if (ga.leader === a) ga.leader = null;
+  if (gb.leader === b) gb.leader = null;
+  markEdited();
+}
+function move(id, gi){
+  const from = result.groups[groupOf(id)], to = result.groups[gi];
+  if (from === to) return;
+  from.members.splice(from.members.indexOf(id), 1); to.members.push(id);
+  if (from.leader === id) from.leader = null;
+  markEdited();
+}
+
+/* ===================== 내보내기 ===================== */
+function resultTitle(){ return `[${result.key}] ${result.subject || ''}${result.task ? ' · ' + result.task : ''}`.trim(); }
+function resultText(){
+  const N = result.names;
+  const lines = [resultTitle() + ` (${fmtDate(result.at)})`, `편성 번호 ${result.seed} · 총 ${result.groups.reduce((t,g)=>t+g.members.length,0)}명, ${result.groups.length}개 조`, ''];
+  result.groups.forEach((g,i) => {
+    lines.push(`${i+1}조 (${g.members.length}명)${g.leader ? ' 조장: ' + N[g.leader].name : ''}`);
+    lines.push('  ' + orderedMembers(g).map(id => (id===g.leader?'★':'') + N[id].name).join(', '));
+  });
+  return lines.join('\n');
+}
+function resultCSV(){
+  const N = result.names, q = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  const rows = [['조','역할','학번','이름','성별','특성']];
+  result.groups.forEach((g,i) => orderedMembers(g).forEach(id => rows.push([`${i+1}조`, id===g.leader?'조장':'조원', id, N[id].name, N[id].gender, N[id].tag])));
+  return '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n');
+}
+
+/* ===================== 이력 ===================== */
+function saveHistory(){
+  if (!result) return;
+  const k = result.key;
+  if (!db.history[k]) db.history[k] = [];
+  const rec = {id: result.histId || Date.now(), at: result.at, subject: result.subject, task: result.task, seed: result.seed,
+    edited: result.edited, names: result.names, groups: result.groups.map(g => ({members:[...g.members], leader:g.leader}))};
+  const idx = db.history[k].findIndex(h => h.id === rec.id);
+  if (idx >= 0) db.history[k][idx] = rec; else db.history[k].push(rec);
+  result.histId = rec.id; result.dirty = false;
+  saveDB(); renderResult(); renderHistory(); renderRoster();
+  toast('편성 결과를 이력에 저장했습니다.');
+}
+function renderHistory(){
+  const list = historyOf().slice().reverse();
+  $('#histList').innerHTML = list.length ? list.map(h => `<li>
+      <div><strong>${fmtDate(h.at)}</strong> · ${esc(h.subject || '과목 미입력')}${h.task ? ' · ' + esc(h.task) : ''}
+        <span class="muted">· ${h.groups.length}개 조 · 편성 번호 ${esc(h.seed)}${h.edited ? ' · 수동 조정' : ''}</span></div>
+      <div class="row"><button class="btn small" data-act="load" data-id="${h.id}">불러오기</button>
+        <button class="btn small danger" data-act="del" data-id="${h.id}">삭제</button></div>
+    </li>`).join('') : '<li class="muted">아직 저장된 이력이 없습니다.</li>';
+  const lc = leaderCounts(), studs = roster().students;
+  if (list.length && studs.length){
+    const c = new Map(); studs.forEach(s => { const n = lc.get(s.id)||0; c.set(n, (c.get(n)||0)+1); });
+    $('#histSummary').textContent = '— 조장 경험: ' + [...c.entries()].sort((a,b)=>a[0]-b[0]).map(([n,k]) => `${n}회 ${k}명`).join(', ');
+  } else $('#histSummary').textContent = '';
+  updateClassInfo();
+}
+
+/* ===================== 발표 모드 ===================== */
+let revealed = 0;
+function openPresent(){
+  if (!result) return;
+  const N = result.names;
+  $('#pTitle').textContent = resultTitle();
+  $('#pGrid').innerHTML = result.groups.map((g,i) => `<div class="pcard" data-i="${i}"><h3>${i+1}조</h3><div class="q">?</div>
+    <ul class="names">${orderedMembers(g).map(id => id===g.leader ? `<li class="ld">★ ${esc(N[id].name)} (조장)</li>` : `<li>${esc(N[id].name)}</li>`).join('')}</ul></div>`).join('');
+  revealed = 0; $('#present').hidden = false; document.body.style.overflow = 'hidden'; $('#pNext').focus(); updatePresentBtn();
+}
+function revealNext(){
+  const cards = document.querySelectorAll('#pGrid .pcard');
+  if (revealed < cards.length){ cards[revealed].classList.add('revealed'); cards[revealed].scrollIntoView({block:'nearest', behavior:'smooth'}); revealed++; }
+  updatePresentBtn();
+}
+function revealAll(){ document.querySelectorAll('#pGrid .pcard').forEach(c => c.classList.add('revealed')); revealed = result.groups.length; updatePresentBtn(); }
+function updatePresentBtn(){ $('#pNext').disabled = revealed >= result.groups.length; }
+function closePresent(){ $('#present').hidden = true; document.body.style.overflow = ''; }
+
+/* ===================== 예시 명단 ===================== */
+function sampleStudents(n = 43){
+  const sur = '김이박최정강조윤장임한오서신권황안송류홍'.split('');
+  const fem = ['민지','서연','지우','하은','수빈','예린','유진','다은','채원','지민','서현','윤서','가은','소윤','나연','시은','혜원','은비','지수','하린'];
+  const mal = ['현우','민준','도윤','준서','태민','건우','성민','재현'];
+  const r = Math.random;
+  return Array.from({length:n}, (_,i) => {
+    const male = r() < 0.16;
+    const x = r();
+    return {id: String(20260101 + i), name: sur[Math.floor(r()*sur.length)] + (male ? mal : fem)[Math.floor(r()*(male?mal:fem).length)],
+      gender: male ? '남' : '여', tag: x < 0.07 ? '편입' : x < 0.12 ? '재수강' : '', volunteer: r() < 0.15, present: true};
+  });
+}
+
+/* ===================== 이벤트 ===================== */
+function onClassChange(){ result = null; sel = null; saveSettings(); loadConstraints(); renderRoster(); renderResult(); renderHistory(); }
+function loadConstraints(){ const r = db.rosters[classKey()]; $('#sepText').value = r?.sep || ''; $('#fixedText').value = r?.fixed || ''; }
+$('#grade').addEventListener('change', onClassChange);
+$('#cls').addEventListener('change', onClassChange);
+$('#cls').addEventListener('input', updateClassInfo);
+['subject','task','size','count','leader','optGender','optTag','optAvoid'].forEach(id => {
+  $('#'+id).addEventListener('input', () => { saveSettings(); updatePreview(); });
+  $('#'+id).addEventListener('change', () => { saveSettings(); updatePreview(); });
+});
+document.querySelectorAll('input[name=mode],input[name=rem]').forEach(el => el.addEventListener('change', () => { saveSettings(); updatePreview(); }));
+$('#size').addEventListener('focus', () => { document.querySelector('input[name=mode][value=size]').checked = true; updatePreview(); });
+$('#count').addEventListener('focus', () => { document.querySelector('input[name=mode][value=count]').checked = true; updatePreview(); });
+$('#sepText').addEventListener('input', e => { roster().sep = e.target.value; saveDB(); });
+$('#fixedText').addEventListener('input', e => { roster().fixed = e.target.value; saveDB(); });
+
+$('#btnAdd').addEventListener('click', () => {
+  const p = parseRoster($('#paste').value);
+  if (!p.length) return toast('붙여넣은 내용에서 학생을 찾지 못했습니다.');
+  addStudents(p, false); $('#paste').value = ''; toast(`${p.length}명을 명단에 추가했습니다.`);
+});
+$('#btnReplace').addEventListener('click', () => {
+  const p = parseRoster($('#paste').value);
+  if (!p.length) return toast('붙여넣은 내용에서 학생을 찾지 못했습니다.');
+  if (roster().students.length && !confirm(`${classKey()} 명단을 새 명단(${p.length}명)으로 바꿀까요?`)) return;
+  addStudents(p, true); $('#paste').value = ''; toast(`명단을 ${p.length}명으로 바꿨습니다.`);
+});
+$('#csvFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const buf = await f.arrayBuffer();
+  let text; try { text = new TextDecoder('utf-8', {fatal:true}).decode(buf); } catch(_) { text = new TextDecoder('euc-kr').decode(buf); }
+  $('#paste').value = text; e.target.value = '';
+  toast('파일 내용을 불러왔습니다. ‘명단에 추가’ 또는 ‘명단 바꾸기’를 누르세요.');
+});
+$('#btnSample').addEventListener('click', () => {
+  if (roster().students.length && !confirm('현재 명단을 예시 명단(43명, 가상 인물)으로 바꿀까요?')) return;
+  addStudents(sampleStudents(), true); toast('예시 명단 43명을 넣었습니다. (가상 인물)');
+});
+$('#btnAllPresent').addEventListener('click', () => { roster().students.forEach(s => s.present = true); saveDB(); renderRoster(); });
+$('#btnClearRoster').addEventListener('click', () => {
+  if (!roster().students.length) return;
+  if (!confirm(`${classKey()} 명단을 모두 지울까요? (편성 이력은 유지됩니다)`)) return;
+  roster().students = []; saveDB(); renderRoster();
+});
+$('#rosterBody').addEventListener('change', e => {
+  const tr = e.target.closest('tr[data-i]'), f = e.target.dataset.f; if (!tr || !f) return;
+  const s = roster().students[+tr.dataset.i];
+  if (e.target.type === 'checkbox') s[f] = e.target.checked;
+  else { const v = e.target.value.trim(); if (f === 'name' && !v){ e.target.value = s.name; return; } s[f] = v; }
+  if (f === 'present') tr.classList.toggle('absent', !s.present);
+  saveDB(); updateCounts();
+});
+$('#rosterBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-act=del]'); if (!b) return;
+  const i = +b.closest('tr').dataset.i, s = roster().students[i];
+  roster().students.splice(i, 1); saveDB(); renderRoster(); toast(`${s.name} 학생을 삭제했습니다.`);
+});
+$('#btnAddOne').addEventListener('click', () => {
+  const name = $('#newName').value.trim(); if (!name) { $('#newName').focus(); return toast('이름을 입력하세요.'); }
+  const id = $('#newId').value.trim();
+  if (id && roster().students.some(s => s.id === id)) return toast('이미 있는 학번입니다.');
+  addStudents([{id, name, gender:$('#newGender').value, tag:$('#newTag').value.trim(), volunteer:false, present:true}], false);
+  ['#newId','#newName','#newTag'].forEach(s => $(s).value = ''); $('#newGender').value = ''; $('#newId').focus();
+});
+$('#newName').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnAddOne').click(); });
+
+$('#btnRun').addEventListener('click', () => runFormation(false));
+$('#btnReshuffle').addEventListener('click', () => { $('#seedInput').value = ''; runFormation(true); });
+$('#btnPresent').addEventListener('click', openPresent);
+$('#btnCopy').addEventListener('click', async () => toast(await copyText(resultText()) ? '결과를 복사했습니다. 공지에 붙여넣으세요.' : '복사에 실패했습니다.'));
+$('#btnCSV').addEventListener('click', () => download(`조편성_${result.key.replace(/\s/g,'')}_${today()}.csv`, resultCSV(), 'text/csv;charset=utf-8'));
+$('#btnPrint').addEventListener('click', () => window.print());
+$('#btnSaveHist').addEventListener('click', saveHistory);
+
+const G = $('#groups');
+G.addEventListener('click', e => {
+  if (!result) return;
+  const chip = e.target.closest('.chip'), card = e.target.closest('.group');
+  if (e.target.closest('[data-act=leader]') && chip){
+    const g = result.groups[groupOf(chip.dataset.id)];
+    g.leader = g.leader === chip.dataset.id ? null : chip.dataset.id; markEdited(); sel = null; renderResult(); return;
+  }
+  if (chip){
+    const id = chip.dataset.id;
+    if (!sel) sel = id;
+    else if (sel === id) sel = null;
+    else if (groupOf(sel) !== groupOf(id)){ swap(sel, id); sel = null; }
+    else sel = id;
+    renderResult(); return;
+  }
+  if (card && sel){ const gi = +card.dataset.g; if (groupOf(sel) !== gi) move(sel, gi); sel = null; renderResult(); }
+});
+G.addEventListener('dragstart', e => { const c = e.target.closest('.chip'); if (!c) return; e.dataTransfer.setData('text/plain', c.dataset.id); e.dataTransfer.effectAllowed = 'move'; });
+G.addEventListener('dragover', e => { const card = e.target.closest('.group'); if (!card) return; e.preventDefault();
+  G.querySelectorAll('.drop-target').forEach(x => x !== card && x.classList.remove('drop-target')); card.classList.add('drop-target'); });
+G.addEventListener('dragleave', e => { const card = e.target.closest('.group'); if (card && !card.contains(e.relatedTarget)) card.classList.remove('drop-target'); });
+G.addEventListener('drop', e => {
+  e.preventDefault(); G.querySelectorAll('.drop-target').forEach(x => x.classList.remove('drop-target'));
+  const id = e.dataTransfer.getData('text/plain'); if (!id || groupOf(id) < 0) return;
+  const chip = e.target.closest('.chip'), card = e.target.closest('.group');
+  if (chip && chip.dataset.id !== id) swap(id, chip.dataset.id);
+  else if (card) move(id, +card.dataset.g);
+  sel = null; renderResult();
+});
+
+$('#histList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const k = classKey(), id = +b.dataset.id, h = historyOf(k).find(x => x.id === id); if (!h) return;
+  if (b.dataset.act === 'load'){
+    result = {key:k, subject:h.subject, task:h.task, seed:h.seed, at:h.at, names:h.names, edited:h.edited, dirty:false, histId:h.id,
+      groups: h.groups.map(g => ({members:[...g.members], leader:g.leader})), warnings:[], checks:null, eval:{}};
+    sel = null; renderResult(); $('#resultSec').scrollIntoView({behavior:'smooth'});
+  } else if (confirm(`${fmtDate(h.at)} 편성 이력을 삭제할까요?`)){
+    db.history[k] = historyOf(k).filter(x => x.id !== id); saveDB();
+    if (result && result.histId === id){ result.histId = null; result.dirty = true; renderResult(); }
+    renderHistory(); renderRoster();
+  }
+});
+
+$('#pNext').addEventListener('click', revealNext);
+$('#pAll').addEventListener('click', revealAll);
+$('#pClose').addEventListener('click', closePresent);
+document.addEventListener('keydown', e => {
+  if (!$('#present').hidden){
+    if (e.key === 'Escape') closePresent();
+    else if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter'){ e.preventDefault(); revealNext(); }
+  } else if (e.key === 'Escape' && sel){ sel = null; renderResult(); }
+});
+
+$('#btnBackup').addEventListener('click', () => download(`조편성_백업_${today()}.json`, JSON.stringify(db, null, 2), 'application/json'));
+$('#restoreFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return; e.target.value = '';
+  try{
+    const d = JSON.parse(await f.text());
+    if (!d || typeof d.rosters !== 'object') throw new Error();
+    if (!confirm('현재 브라우저의 모든 조 편성 데이터를 백업 파일 내용으로 바꿀까요?')) return;
+    db = Object.assign({rosters:{}, history:{}, settings:{}}, d); saveDB();
+    loadSettings(); onClassChange(); toast('백업을 복원했습니다.');
+  }catch(_){ toast('올바른 백업 파일이 아닙니다.'); }
+});
+$('#btnDeleteClass').addEventListener('click', () => {
+  const k = classKey();
+  if (!confirm(`${k}의 명단·조건·편성 이력을 모두 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  delete db.rosters[k]; delete db.history[k]; saveDB(); onClassChange(); toast(`${k} 데이터를 삭제했습니다.`);
+});
+
+/* ===================== 시작 ===================== */
+loadSettings(); loadConstraints(); renderRoster(); renderHistory();
+</script>
+</body>
+</html>
